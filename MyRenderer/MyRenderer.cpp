@@ -125,7 +125,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 BYTE bitData[800 * 600 * 3];
 void OnPaint(HDC hdc)
 {
-    static Texture2D tex(800, 600);
+    static Texture2D3F tex(800, 600);
 
     Graphics graphics(hdc);
 
