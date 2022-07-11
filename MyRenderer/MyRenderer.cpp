@@ -3,6 +3,7 @@
 
 #include "framework.h"
 #include "MyRenderer.h"
+#include "Pipeline.h"
 #include <objidl.h>
 #include <gdiplus.h>
 using namespace Gdiplus;
@@ -124,6 +125,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 BYTE bitData[800 * 600 * 3];
 void OnPaint(HDC hdc)
 {
+    static Texture2D tex(800, 600);
+
     Graphics graphics(hdc);
 
     BITMAPINFO bmi;
@@ -134,6 +137,7 @@ void OnPaint(HDC hdc)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biBitCount = 24;
+    tex.toBitmap(bitData);
     Gdiplus::Bitmap* bitmap = new Gdiplus::Bitmap(&bmi, bitData);
 
     graphics.DrawImage(bitmap, 0, 0);
@@ -156,7 +160,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
     case WM_CREATE:
         {
-            memset(bitData, 127, 800 * 600 * 3);
             return DefWindowProc(hWnd, message, wParam, lParam);
         }
         break;
