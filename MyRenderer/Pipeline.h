@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Texture.h"
+#include "Sampler.h"
 #include "Shader.h"
 
 class Pipeline
@@ -13,7 +14,7 @@ public:
 		return renderTarget;
 	}
 
-	void setMultiSampleSState(std::vector<MyMathHelper::Vec2f> coords)
+	void setMultiSampleSState(std::vector<Vec2f> coords)
 	{
 		RTSampleCoords = coords;
 	}
@@ -41,7 +42,7 @@ public:
 	}
 
 protected:
-	std::vector<MyMathHelper::Vec2f> RTSampleCoords = {MyMathHelper::Vec2f(0.5f, 0.5f)};
+	std::vector<Vec2f> RTSampleCoords = {Vec2f(0.5f, 0.5f)};
 	Texture2D3F renderTarget;
 	std::vector<ShaderContext> vertex;
 	std::vector<int> index;

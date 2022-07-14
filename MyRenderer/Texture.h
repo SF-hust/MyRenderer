@@ -13,14 +13,14 @@ public:
 	{
 		for (int i = 0; i < width * height; ++i)
 		{
-			pDest[3 * i] = MyMathHelper::floatToByte(data[i].b);
-			pDest[3 * i + 1] = MyMathHelper::floatToByte(data[i].g);
-			pDest[3 * i + 2] = MyMathHelper::floatToByte(data[i].r);
+			pDest[3 * i] = floatToByte(data[i].b);
+			pDest[3 * i + 1] = floatToByte(data[i].g);
+			pDest[3 * i + 2] = floatToByte(data[i].r);
 		}
 	}
 
 public:
-	std::vector<MyMathHelper::Vec3f> data;
+	std::vector<Vec3f> data;
 
 protected:
 	int width;
@@ -39,7 +39,7 @@ public:
 	{
 		for (int i = 0; i < width * height; ++i)
 		{
-			pDest[i] = MyMathHelper::floatToByte(data[i]);
+			pDest[i] = floatToByte(data[i]);
 		}
 	}
 
