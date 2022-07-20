@@ -24,12 +24,23 @@ public:
 
 	void setTextures(const std::vector<Texture2D3F>& t) { textures = t; }
 
+	void setShaders(VertexShader* pVS, PixelShader* pPS) { pVertexShader = pVS; pPixelShader = pPS; }
+
+	void setUniforms(const ShaderContext& uni) { uniforms = uni; }
+
+protected:
+	void rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2);
+
 protected:
 	std::vector<Vec2f> sampleCoords = {Vec2f(0.5f, 0.5f)};
 	Texture2D3F renderTarget;
 	std::vector<ShaderContext> vertex;
 	std::vector<int> index;
 	std::vector<Texture2D3F> textures;
+	VertexShader* pVertexShader;
+	PixelShader* pPixelShader;
+	ShaderContext uniforms;
+
 	int width = 0;
 	int height = 0;
 	bool enableDepthTest = true;

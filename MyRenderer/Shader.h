@@ -48,7 +48,7 @@ Vec4f sampler(const Texture2D3F& texture, Vec2f uv, const SampleMode& mode, floa
 // class VertexShader
 class VertexShader
 {
-protected:
+public:
 	// override this function to imply your own vertex shader
 	virtual void excute(ShaderContext& input, ShaderContext& output, ShaderContext& uniform) = 0;
 
@@ -60,19 +60,20 @@ class PixelShader
 public: //DON'T use these functions in the derived class
 	void setDDUV(float ddu, float ddv) { this->ddu = ddu; this->ddv = ddv; }
 
-	void setSampleMode(const SampleMode& mode) { SampleMode = mode; }
+	void setSampleMode(const SampleMode& mode) { sampleMode = mode; }
 
-protected:
-	// these are some built-in functions, USE them in the override function
-	Vec4f sample(const Texture2D3F& texture, const Vec2f& uv)
-	{ sampler(texture, uv, sampleMode, ddu, ddv); }
-
+public:
 	// override this function to imply your own shader
 	virtual Vec4f excute(
 		ShaderContext& input,
 		ShaderContext& uniform,
 		const std::vector<Texture2D3F> textures
 	) = 0;
+
+protected:
+	// these are some built-in functions, USE them in the override function
+	Vec4f sample(const Texture2D3F& texture, const Vec2f& uv)
+	{ sampler(texture, uv, sampleMode, ddu, ddv); }
 
 protected:
 	// don't use them in excute directly
