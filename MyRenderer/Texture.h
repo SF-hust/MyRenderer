@@ -2,6 +2,8 @@
 
 #include "MathHelper.h"
 
+// the left top of the texture is point (0.0, 0.0)
+
 class Texture2D3F
 {
 public:
@@ -9,7 +11,7 @@ public:
 
 	~Texture2D3F() { }
 
-	void toBitmap(uint8_t* pDest)
+	void toBitmap(uint8_t* pDest) const
 	{
 		for (int i = 0; i < width * height; ++i)
 		{
@@ -19,10 +21,11 @@ public:
 		}
 	}
 
+	Vec3f& at(int x, int y) { return data[x + y * height]; }
+	const Vec3f& at(int x, int y) const { return data[x + y * height]; }
+
 public:
 	std::vector<Vec3f> data;
-
-protected:
 	int width;
 	int height;
 	
@@ -35,7 +38,7 @@ public:
 
 	~Texture2D1F() { }
 
-	void toBitmap(uint8_t* pDest)
+	void toBitmap(uint8_t* pDest) const
 	{
 		for (int i = 0; i < width * height; ++i)
 		{
@@ -43,10 +46,11 @@ public:
 		}
 	}
 
+	float& at(int x, int y) { return data[x + y * height]; }
+	const float& at(int x, int y) const { return data[x + y * height]; }
+
 public:
 	std::vector<float> data;
-
-protected:
 	int width;
 	int height;
 
