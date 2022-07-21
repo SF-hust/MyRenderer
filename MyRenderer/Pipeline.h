@@ -9,13 +9,35 @@ public:
 
     Texture2D3F& getRenderTarget() { return renderTarget; }
 
-    void setMultiSampleSState(const std::vector<Vec2f>& coords) { sampleCoords = coords; }
+    void setMultiSampleSState(const std::vector<Vec2f>& coords)
+    {
+        sampleCoords = coords;
+        if (sampleCoords.size() > 32)
+        {
+            sampleCoords.resize(32);
+        }
+        multiSampleCount = sampleCoords.size();
+    }
 
     void setRenderTargetState(int w, int h, bool depth)
     {
-        width = w;
-        height = h;
         enableDepthTest = depth;
+        if (width != w || height != h)
+        {
+            width = w;
+            height = h;
+            renderTarget = Texture2D3F(width, height);
+            depthBuffer = Texture2D1F(width, height);
+        }
+    }
+
+    void clearRenderTarget(Vec3f color, float depth)
+    {
+        for (int i = 0; i < width * height; ++i)
+        {
+            renderTarget.data[i] = color;
+            depthBuffer.data[i] = depth;
+        }
     }
 
     void setVertexBuffer(const std::vector<ShaderContext>& v) { vertex = v; }
@@ -33,13 +55,19 @@ protected:
 
 protected:
     std::vector<Vec2f> sampleCoords = {Vec2f(0.5f, 0.5f)};
+    int multiSampleCount = 1;
     Texture2D3F renderTarget;
+    Texture2D1F depthBuffer;
     std::vector<ShaderContext> vertex;
     std::vector<int> index;
     std::vector<Texture2D3F> textures;
     VertexShader* pVertexShader;
     PixelShader* pPixelShader;
     ShaderContext uniforms;
+
+    std::vector<Texture2D3F> tmpColorBuffer;
+    std::vector<Texture2D1F> tmpDepthBuffer;
+    std::vector<uint32_t> msMask;
 
     int width = 0;
     int height = 0;
