@@ -46,3 +46,4 @@ protected:
     bool enableDepthTest = true;
 };
 
+Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f& p2, const Vec3f& q);

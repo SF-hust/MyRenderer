@@ -17,3 +17,9 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
 {
 
 }
+
+Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f& p2, const Vec3f& q)
+{
+    
+    return Vec3f();
+}

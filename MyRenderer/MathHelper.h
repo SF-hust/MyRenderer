@@ -28,7 +28,7 @@ template <size_t N, typename T> struct Vector {
     inline const T& operator[] (size_t i) const { assert(i < N); return m[i]; }
     inline T& operator[] (size_t i) { assert(i < N); return m[i]; }
     inline void load(const T* ptr) { for (size_t i = 0; i < N; i++) m[i] = ptr[i]; }
-    inline void save(T* ptr) { for (size_t i = 0; i < N; i++) ptr[i] = m[i]; }
+    inline void save(T* ptr) const { for (size_t i = 0; i < N; i++) ptr[i] = m[i]; }
 };
 
 template <typename T>
@@ -63,7 +63,7 @@ struct Vector<2, T>
     inline const T& operator[] (size_t i) const { assert(i < 2); return m[i]; }
     inline T& operator[] (size_t i) { assert(i < 2); return m[i]; }
     inline void load(const T* ptr) { for (size_t i = 0; i < 2; i++) m[i] = ptr[i]; }
-    inline void save(T* ptr) { for (size_t i = 0; i < 2; i++) ptr[i] = m[i]; }
+    inline void save(T* ptr) const { for (size_t i = 0; i < 2; i++) ptr[i] = m[i]; }
 };
 
 template <typename T>
@@ -83,8 +83,8 @@ struct Vector<3, T>
     inline const T& operator[] (size_t i) const { assert(i < 3); return m[i]; }
     inline T& operator[] (size_t i) { assert(i < 3); return m[i]; }
     inline void load(const T* ptr) { for (size_t i = 0; i < 3; i++) m[i] = ptr[i]; }
-    inline void save(T* ptr) { for (size_t i = 0; i < 3; i++) ptr[i] = m[i]; }
-    inline Vec2T<T> xy() { return Vec2T<T>(x, y); }
+    inline void save(T* ptr) const { for (size_t i = 0; i < 3; i++) ptr[i] = m[i]; }
+    inline Vec2T<T> xy() const { return Vec2T<T>(x, y); }
 };
 
 template <typename T>
@@ -105,9 +105,9 @@ struct Vector<4, T>
     inline const T& operator[] (size_t i) const { assert(i < 4); return m[i]; }
     inline T& operator[] (size_t i) { assert(i < 4); return m[i]; }
     inline void load(const T* ptr) { for (size_t i = 0; i < 4; i++) m[i] = ptr[i]; }
-    inline void save(T* ptr) { for (size_t i = 0; i < 4; i++) ptr[i] = m[i]; }
-    inline Vec2T<T> xy() { return Vec2T<T>(x, y); }
-    inline Vec3T<T> xyz() { return Vec3T<T>(x, y, z); }
+    inline void save(T* ptr) const { for (size_t i = 0; i < 4; i++) ptr[i] = m[i]; }
+    inline Vec2T<T> xy() const { return Vec2T<T>(x, y); }
+    inline Vec3T<T> xyz() const { return Vec3T<T>(x, y, z); }
 
 };
 
