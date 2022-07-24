@@ -146,6 +146,7 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
 
 bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
 {
+
     return false;
 }
 
@@ -157,5 +158,30 @@ Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f&
 
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2)
 {
-
+    int key;
+    for (auto itr = in0.f.begin(); itr != in0.f.end(); ++itr)
+    {
+        key = itr->first;
+        out.f[key] = factor.x * in0.f.at(key) + factor.y * in1.f.at(key) + factor.z * in2.f.at(key);
+    }
+    for (auto itr = in0.v2f.begin(); itr != in0.v2f.end(); ++itr)
+    {
+        key = itr->first;
+        out.v2f[key] = factor.x * in0.v2f.at(key) + factor.y * in1.v2f.at(key) + factor.z * in2.v2f.at(key);
+    }
+    for (auto itr = in0.v3f.begin(); itr != in0.v3f.end(); ++itr)
+    {
+        key = itr->first;
+        out.v3f[key] = factor.x * in0.v3f.at(key) + factor.y * in1.v3f.at(key) + factor.z * in2.v3f.at(key);
+    }
+    for (auto itr = in0.v4f.begin(); itr != in0.v4f.end(); ++itr)
+    {
+        key = itr->first;
+        out.v4f[key] = factor.x * in0.v4f.at(key) + factor.y * in1.v4f.at(key) + factor.z * in2.v4f.at(key);
+    }
+    for (auto itr = in0.m4x4.begin(); itr != in0.m4x4.end(); ++itr)
+    {
+        key = itr->first;
+        out.m4x4[key] = factor.x * in0.m4x4.at(key) + factor.y * in1.m4x4.at(key) + factor.z * in2.m4x4.at(key);
+    }
 }
