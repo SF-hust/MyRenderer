@@ -90,6 +90,8 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             // calculate which samples should be used
             Vec4f result;
             float depth = 1.0f;
+            Vec2f avgCenter = { 0.0f, 0.0f };
+            int coverCount = 0;
             for (i = 0; i < multiSampleCount; ++i)
             {
                 // convert form screen to NDC
@@ -101,17 +103,20 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                     v1.v4f.at(SV_Position).xy(),
                     v2.v4f.at(SV_Position).xy() ))
                 {
+                    avgCenter += sampleCoords[i];
+                    ++coverCount;
                     msMask[x + y * width] |= (1 << i);
                 }
             }
+            avgCenter /= float(coverCount);
             // if this triangle covers at least 1 sample, call pixel shader to calculate color of this pixel
-            if (msMask[x + y * width] != 0)
+            if (coverCount > 0)
             {
                 Vec3f factor;
                 ShaderContext pixelIn;
                 Vec2f q = {
-                    (float(x) + 0.5f) / width * 2.0f - 1.0f,
-                    (float(y) + 0.5f) / height * 2.0f - 1.0f };
+                    (float(x) + avgCenter.x) / width * 2.0f - 1.0f,
+                    (float(y) + avgCenter.y) / height * 2.0f - 1.0f };
                 factor = getPerspectiveCorrectFactor(
                     v0.v4f.at(SV_Position),
                     v1.v4f.at(SV_Position),
@@ -152,4 +157,5 @@ Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f&
 
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2)
 {
+
 }
