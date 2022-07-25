@@ -76,6 +76,8 @@ protected:
 
 bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
 
-Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f& p2, const Vec2f& q);
+Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2);
 
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2);
+
+Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);

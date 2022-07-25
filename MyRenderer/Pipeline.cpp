@@ -118,10 +118,10 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                     (float(x) + avgCenter.x) / width * 2.0f - 1.0f,
                     (float(y) + avgCenter.y) / height * 2.0f - 1.0f };
                 factor = getPerspectiveCorrectFactor(
+                    q,
                     v0.v4f.at(SV_Position),
                     v1.v4f.at(SV_Position),
-                    v2.v4f.at(SV_Position),
-                    q);
+                    v2.v4f.at(SV_Position));
                 shaderContextLerp(pixelIn, factor, v0, v1, v2);
                 depth = pixelIn.v4f[SV_Position].z;
                 result = pPixelShader->excute(pixelIn, uniforms, textures);
@@ -146,14 +146,19 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
 
 bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
 {
-
-    return false;
+    Vec3f factor = getFactor(p, v0, v1, v2);
+    return factor[0] >= 0.0f && factor[1] >= 0.0f && factor[2] >= 0.0f;
 }
 
-Vec3f getPerspectiveCorrectFactor(const Vec4f& p0, const Vec4f& p1, const Vec4f& p2, const Vec2f& q)
+Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
 {
-    
-    return Vec3f();
+    Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
+    float c0 = rawFactor[0] / p0.w;
+    float c1 = rawFactor[1] / p1.w;
+    float c2 = rawFactor[2] / p2.w;
+    float c = c0 + c1 + c2;
+    Vec3f correctedFactor = { c0 / c,c1 / c,c2 / c };
+    return correctedFactor;
 }
 
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2)
@@ -184,4 +189,17 @@ void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in
         key = itr->first;
         out.m4x4[key] = factor.x * in0.m4x4.at(key) + factor.y * in1.m4x4.at(key) + factor.z * in2.m4x4.at(key);
     }
+}
+
+Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    Vec2f c = p - v2;
+    Vec2f a = v1 - v2;
+    Vec2f b = v0 - v2;
+    float axb = Vector_cross(a, b);
+    Vec3f factor;
+    factor[1] = Vector_cross(c, b) / axb;
+    factor[0] = Vector_cross(c, a) / (-axb);
+    factor[2] = 1.0f - factor[0] - factor[1];
+    return factor;
 }
