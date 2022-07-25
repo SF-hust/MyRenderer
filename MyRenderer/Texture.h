@@ -14,14 +14,14 @@ public:
     {
         mipmapLevel = 0;
         if (!mipmap || width == 1 || height == 1)
-        // gen no mipmap
+            // gen no mipmap
         {
             rawWidth = width;
             rawHeight = height;
             data = std::vector<T>(rawWidth * rawHeight);
         }
         else if (std::__popcount(width) != 1 || std::__popcount(height) != 1)
-        // try to gen mipmap but the width or height is not pow(2, n)
+            // try to gen mipmap but the width or height is not pow(2, n)
         {
             width = 0;
             height = 0;
@@ -30,7 +30,7 @@ public:
             mipmapLevel = 0;
         }
         else
-        // gen mipmaps
+            // gen mipmaps
         {
             rawWidth = width * 2;
             rawHeight = height * 2;
@@ -43,7 +43,7 @@ public:
     ~Texture2D() {}
 
     // this function only outputtings the level0 texture
-    void toBitmap(uint8_t *pDest) const
+    void toBitmap(uint8_t* pDest) const
     {
         for (int row = 0; row < height; ++row)
         {
@@ -87,21 +87,21 @@ protected:
 
 public:
     // at(x, y), just used for level0
-    T &at(int x, int y) { return get(x, y, 0); }
-    const T &at(int x, int y) const { return get(x, y, 0); }
+    T& at(int x, int y) { return get(x, y, 0); }
+    const T& at(int x, int y) const { return get(x, y, 0); }
 
     // mipmapped get(x, y, l, ul, vl)
-    T &get(int x, int y, int l, int ul = 0, int vl = 0)
+    T& get(int x, int y, int l, int ul = 0, int vl = 0)
     {
         int rawx, rawy;
         if (ul == 0 && vl == 0)
-        // if is not anistropic
+            // if is not anistropic
         {
             rawx = x + int(rawWidth) - (1 << (mipmapLevel - l + 1));
             rawy = y + int(rawWidth) - (1 << (mipmapLevel - l + 1));
         }
         else
-        // anistropic
+            // anistropic
         {
             rawx = x + int(rawWidth) - (1 << (mipmapLevel - ul + 1));
             rawy = y + int(rawWidth) - (1 << (mipmapLevel - vl + 1));
@@ -110,17 +110,17 @@ public:
         return data[rawIndex(rawx, rawy)];
     }
 
-    const T &get(int x, int y, int l, int ul = 0, int vl = 0) const
+    const T& get(int x, int y, int l, int ul = 0, int vl = 0) const
     {
         int rawx, rawy;
         if (ul == 0 && vl == 0)
-        // if is not anistropic
+            // if is not anistropic
         {
             rawx = x + int(rawWidth) - (1 << (mipmapLevel - l + 1));
             rawy = y + int(rawWidth) - (1 << (mipmapLevel - l + 1));
         }
         else
-        // anistropic
+            // anistropic
         {
             rawx = x + int(rawWidth) - (1 << (mipmapLevel - ul + 1));
             rawy = y + int(rawWidth) - (1 << (mipmapLevel - vl + 1));
