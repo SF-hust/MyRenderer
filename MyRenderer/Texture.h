@@ -7,6 +7,7 @@
 template <class T>
 class Texture2D
 {
+public:
     Texture2D(size_t w, size_t h) : Texture2D(w, h, false) {}
 
     Texture2D(size_t w, size_t h, bool mipmap) : width(w), height(h)
@@ -50,6 +51,7 @@ class Texture2D
         }
     }
 
+protected:
     void genMipmap()
     {
         // gen top half of the mipmapped texture
@@ -83,6 +85,7 @@ class Texture2D
         // gen mipmap end
     }
 
+public:
     // at(x, y), just used for level0
     T &at(int x, int y) { return get(x, y, 0); }
     const T &at(int x, int y) const { return get(x, y, 0); }
@@ -126,7 +129,6 @@ class Texture2D
         return data[rawIndex(rawx, rawy)];
     }
 
-public:
     inline size_t rawIndex(int x, int y)
     {
         return x + y * rawWidth;
