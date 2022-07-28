@@ -86,6 +86,10 @@ protected:
     }
 
 public:
+    // rawat(x, y), directly returns the texture data
+    T &rawat(int x, int y) { return data[rawIndex(x, y)]; }
+    const T &rawat(int x, int y) const { return data[rawIndex(x, y)]; }
+
     // at(x, y), just used for level0
     T &at(int x, int y) { return get(x, y, 0); }
     const T &at(int x, int y) const { return get(x, y, 0); }
