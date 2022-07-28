@@ -34,8 +34,8 @@ Vec4f sampler(const Texture2D3F& texture, Vec2f rawUV, const SampleMode& mode, f
     {
     case SampleMode::FilterMode::POINT:
     {
-        int x = std::min(int(uv.u * texture.width), texture.width - 1);
-        int y = std::min(int(uv.v * texture.height), texture.height - 1);
+        int x = std::min(int(uv.u) * int(texture.width), int(texture.width - 1));
+        int y = std::min(int(uv.v) * int(texture.height), int(texture.height - 1));
         result = texture.at(x, y);
     }
         break;
@@ -60,7 +60,7 @@ Vec4f sampler(const Texture2D3F& texture, Vec2f rawUV, const SampleMode& mode, f
         else
         {
             x0 = int(xf);
-            x1 = std::min(x0 + 1, texture.width - 1);
+            x1 = std::min(x0 + 1, int(texture.width - 1));
             ku = 1.5f - fmodf(xf, 1.0f);
         }
         if (uv.v = 1.0f)
@@ -77,7 +77,7 @@ Vec4f sampler(const Texture2D3F& texture, Vec2f rawUV, const SampleMode& mode, f
         else
         {
             y0 = int(yf);
-            y1 = std::min(y0 + 1, texture.height - 1);
+            y1 = std::min(y0 + 1, int(texture.height - 1));
             kv = 1.5f - fmodf(yf, 1.0f);
         }
         // blend the colors
