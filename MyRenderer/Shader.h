@@ -2,6 +2,8 @@
 
 #include <unordered_map>
 #include "Texture.h"
+#include "Sampler.h"
+#include "PipelineState.h"
 
 // some constants to use as key in the shader context
 constexpr int SV_Position = 0;
@@ -17,40 +19,17 @@ struct ShaderContext
     std::unordered_map<int, Mat4x4f> m4x4;
 };
 
-
-//
-struct SampleMode
+struct ShaderUniform : public ShaderContext
 {
-    // filter mode, used for sampler
-    enum FilterMode
-    {
-        POINT,
-        LINEAR,
-        ANISOTROPIC
-    };
-
-    // address mode, used for sampler
-    enum AddressMode
-    {
-        REPEAT,
-        MIRRORED_REPEAT,
-        CLAMP_TO_EDGE,
-        CLAMP_TO_BORDER,
-    };
-
-    FilterMode filterMode;
-    AddressMode addressMode;
+    std::unordered_map<int, Sampler2D<Vec3f>> sampler2D3F;
 };
-
-// the sample function
-Vec4f sampler(const Texture2D3F& texture, Vec2f uv, const SampleMode& mode, float ddu, float ddv);
 
 // class VertexShader
 class VertexShader
 {
 public:
     // override this function to imply your own vertex shader
-    virtual void excute(ShaderContext& input, ShaderContext& output, ShaderContext& uniform) = 0;
+    virtual void excute(ShaderContext& input, ShaderContext& output, ShaderUniform& uniform) = 0;
 
 };
 
@@ -60,23 +39,26 @@ class PixelShader
 public: //DON'T use these functions in the derived class
     void setDDUV(float ddu, float ddv) { this->ddu = ddu; this->ddv = ddv; }
 
-    void setSampleMode(const SampleMode& mode) { sampleMode = mode; }
+    void setPipelineState(PipelineState* p) { pPipelineState = p; }
 
 public:
     // override this function to imply your own shader
     virtual Vec4f excute(
         ShaderContext& input,
-        ShaderContext& uniform,
+        ShaderUniform& uniform,
         const std::vector<Texture2D3F> textures
     ) = 0;
 
 protected:
     // these are some built-in functions, USE them in the override function
-    Vec4f sample(const Texture2D3F& texture, const Vec2f& uv)
-    { sampler(texture, uv, sampleMode, ddu, ddv); }
+    template<class T>
+    Vec4f sample2D(const Texture2D<T>& texture, const Vec2f& uv, Sampler2D<T>& sampler)
+    { 
+        // TODO
+    }
 
 protected:
     // don't use them in excute directly
     float ddu = 0.0f, ddv = 0.0f;
-    SampleMode sampleMode = {SampleMode::FilterMode::POINT, SampleMode::AddressMode::CLAMP_TO_BORDER};
+    PipelineState* pPipelineState;
 };

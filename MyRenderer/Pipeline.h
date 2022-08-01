@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shader.h"
+#include "PipelineState.h"
 
 class Pipeline
 {
@@ -48,7 +49,7 @@ public:
 
     void setShaders(VertexShader* pVS, PixelShader* pPS) { pVertexShader = pVS; pPixelShader = pPS; }
 
-    void setUniforms(const ShaderContext& uni) { uniforms = uni; }
+    void setUniforms(const ShaderUniform& uni) { uniforms = uni; }
 
 protected:
     void rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2);
@@ -63,11 +64,13 @@ protected:
     std::vector<Texture2D3F> textures;
     VertexShader* pVertexShader;
     PixelShader* pPixelShader;
-    ShaderContext uniforms;
+    ShaderUniform uniforms;
 
     std::vector<Texture2D3F> tmpColorBuffer;
     std::vector<Texture2D1F> tmpDepthBuffer;
     std::vector<uint32_t> msMask;
+
+    PipelineState state;
 
     int width = 0;
     int height = 0;
