@@ -157,7 +157,7 @@ Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& 
     float c1 = rawFactor[1] / p1.w;
     float c2 = rawFactor[2] / p2.w;
     float c = c0 + c1 + c2;
-    Vec3f correctedFactor = { c0 / c,c1 / c,c2 / c };
+    Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
     return correctedFactor;
 }
 
@@ -198,8 +198,8 @@ Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
     Vec2f b = v0 - v2;
     float axb = Vector_cross(a, b);
     Vec3f factor;
-    factor[1] = Vector_cross(c, b) / axb;
-    factor[0] = Vector_cross(c, a) / (-axb);
+    factor[0] = Vector_cross(c, b) / axb;
+    factor[1] = Vector_cross(c, a) / (-axb);
     factor[2] = 1.0f - factor[0] - factor[1];
     return factor;
 }
