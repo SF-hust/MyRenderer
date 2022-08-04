@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Texture.h"
+#include "PipelineState.h"
 
 enum MipMapMode
 {
@@ -30,7 +31,7 @@ class Sampler2D
 {
 public:
 
-    T sample(const Texture2D<T>& tex, Vec2f uv)
+    T sample(const Texture2D<T>& tex, Vec2f uv, Vec2f ddxUV, Vec2f ddyUV, const PipelineState& pipelineState) const
     {
         T result = {};
 
@@ -61,7 +62,7 @@ public:
     void setBorderColor(Vec4f b) { borderColor = b; }
 
 protected:
-    T sampleFromUVLevel(const Texture2D<T>& tex, Vec2f rawUV, int ul, int vl)
+    T sampleFromUVLevel(const Texture2D<T>& tex, Vec2f rawUV, int ul, int vl) const
     {
         Vec2f uv;
         T result;
@@ -210,9 +211,4 @@ protected:
     MipMapMode mipmapMode = NO_MIPMAP;
     FilterMode filterMode = POINT;
     T borderColor = {};
-
-    // variable for each sample call
-    float ddu = 0.0f;
-    float ddv = 0.0f;
-
 };

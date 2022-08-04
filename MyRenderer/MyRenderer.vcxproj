@@ -145,6 +145,7 @@
     <ClInclude Include="Pipeline.h" />
     <ClInclude Include="PipelineState.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="Sampler.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="targetver.h" />
     <ClInclude Include="Texture.h" />
@@ -152,7 +153,6 @@
   <ItemGroup>
     <ClCompile Include="MyRenderer.cpp" />
     <ClCompile Include="Pipeline.cpp" />
-    <ClCompile Include="Shader.cpp" />
     <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>

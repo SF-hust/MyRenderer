@@ -6,36 +6,33 @@ void Pipeline::renderToTarget()
     int i, c, x, y;
     float d;
     Vec3f color;
-    tmpColorBuffer.reserve(multiSampleCount);
-    tmpDepthBuffer.reserve(multiSampleCount);
+    // clear masks to 0
     msMask.clear();
     msMask.resize(renderTarget.width * renderTarget.height, 0);
-    for (i = 0; i < multiSampleCount; ++i)
-    {
-        tmpColorBuffer.emplace_back(renderTarget.width, renderTarget.height);
-        tmpDepthBuffer.emplace_back(renderTarget.width, renderTarget.height);
-    }
 
     // traverse all vertices, assemble every 3 vertices as 1 triangle
     for (i = 0; i < vertex.size() - 2; i += 3)
     {
         ShaderContext vOut0, vOut1, vOut2;
-        pVertexShader->excute(vertex[i], vOut0, uniforms);
-        pVertexShader->excute(vertex[i + 1], vOut1, uniforms);
-        pVertexShader->excute(vertex[i + 2], vOut2, uniforms);
+        // excute vertex shader for 3 vertices, tranform to clipping space
+        pVertexShader->excute(vertex[i], vOut0, uniforms, state);
+        pVertexShader->excute(vertex[i + 1], vOut1, uniforms, state);
+        pVertexShader->excute(vertex[i + 2], vOut2, uniforms, state);
         // TODO: clipping triangle
 
-        // perspective division
+        // do perspective division
         vOut0.v4f[SV_Position].x /= vOut0.v4f[SV_Position].w;
         vOut0.v4f[SV_Position].y /= vOut0.v4f[SV_Position].w;
         vOut0.v4f[SV_Position].z /= vOut0.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].x /= vOut0.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].y /= vOut0.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].z /= vOut0.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].x /= vOut0.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].y /= vOut0.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].z /= vOut0.v4f[SV_Position].w;
-        // raster
+        vOut1.v4f[SV_Position].x /= vOut1.v4f[SV_Position].w;
+        vOut1.v4f[SV_Position].y /= vOut1.v4f[SV_Position].w;
+        vOut1.v4f[SV_Position].z /= vOut1.v4f[SV_Position].w;
+        vOut2.v4f[SV_Position].x /= vOut2.v4f[SV_Position].w;
+        vOut2.v4f[SV_Position].y /= vOut2.v4f[SV_Position].w;
+        vOut2.v4f[SV_Position].z /= vOut2.v4f[SV_Position].w;
+        // TODO: tranform to NDC space
+        
+        // raster, and shade the pixels
         rasterTriangle(vOut0, vOut1, vOut2);
     }
 
@@ -92,12 +89,13 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             float depth = 1.0f;
             Vec2f avgCenter = { 0.0f, 0.0f };
             int coverCount = 0;
+            int mask = 0;
             for (i = 0; i < multiSampleCount; ++i)
             {
                 // convert form screen to NDC
                 Vec2f p = {
-                    (float(x) + sampleCoords[i].x) / width * 2.0f - 1.0f,
-                    (float(y) + sampleCoords[i].y) / height * 2.0f - 1.0f };
+                    (float(x) + sampleCoords[i].x) / float(width) * 2.0f - 1.0f,
+                    (float(y) + sampleCoords[i].y) / float(height) * 2.0f - 1.0f };
                 if (pointInTriangle(p,
                     v0.v4f.at(SV_Position).xy(),
                     v1.v4f.at(SV_Position).xy(),
@@ -105,9 +103,11 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 {
                     avgCenter += sampleCoords[i];
                     ++coverCount;
-                    msMask[x + y * width] |= (1 << i);
+                    //msMask[x + y * width] |= (1 << i);
+                    mask |= (1 << i);
                 }
             }
+            // sample from the center of the covered sample points
             avgCenter /= float(coverCount);
             // if this triangle covers at least 1 sample, call pixel shader to calculate color of this pixel
             if (coverCount > 0)
@@ -122,24 +122,62 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                     v0.v4f.at(SV_Position),
                     v1.v4f.at(SV_Position),
                     v2.v4f.at(SV_Position));
+                // lerp the vertex properties
                 shaderContextLerp(pixelIn, factor, v0, v1, v2);
                 depth = pixelIn.v4f[SV_Position].z;
-                result = pPixelShader->excute(pixelIn, uniforms, textures);
+                // call pixel shader
+                result = pPixelShader->excute(pixelIn, uniforms, state);
             }
             // check which sample is used, set value to the tmp target
             for (i = 0; i < multiSampleCount; ++i)
             {
-                if ((msMask[x + y * width] & (1 << i)) != 0)
+                if ((mask & (1 << i)) != 0)
                 {
-                    if (tmpDepthBuffer[i].data[x + y * width] < depth)
+                    // if the new depth is smaller,
+                    // or this sample have not been writen
+                    if (tmpDepthBuffer[i].data[x + y * width] < depth ||
+                        (msMask[x + y * width] & (1 << i)) == 0)
                     {
                         tmpColorBuffer[i].data[x + y * width] = result.xyz();
                         tmpDepthBuffer[i].data[x + y * width] = depth;
                     }
                 }
             }
+            // write the sample mask to buffer
+            msMask[x + y * width] = mask;
+            // operation for pixel end
+        }
+    }
+}
 
-            // operating for pixel end
+void Pipeline::mergeMSAARenderTarget()
+{
+    int i, c, x, y;
+    float d;
+    Vec3f color;
+    for (x = 0; x < width; ++x)
+    {
+        for (y = 0; y < height; ++y)
+        {
+            c = 0;
+            d = 2.0f;
+            color = { 0.0f, 0.0f, 0.0f };
+            for (i = 0; i < multiSampleCount; ++i)
+            {
+                if ((msMask[x + y * width] & (1U << i)) != 0)
+                {
+                    ++c;
+                    if (d < tmpDepthBuffer[i].at(x, y))
+                    {
+                        d = tmpDepthBuffer[i].at(x, y);
+                    }
+                    color += tmpColorBuffer[i].at(x, y);
+                }
+            }
+            if (c > 0)
+            {
+                renderTarget.at(x, y) = color / float(c);
+            }
         }
     }
 }

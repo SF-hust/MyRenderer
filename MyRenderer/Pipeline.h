@@ -20,9 +20,9 @@ public:
         multiSampleCount = sampleCoords.size();
     }
 
-    void setRenderTargetState(int w, int h, bool depth)
+    void setRenderTargetState(int w, int h, bool enableDepth)
     {
-        enableDepthTest = depth;
+        enableDepthTest = enableDepth;
         if (width != w || height != h)
         {
             width = w;
@@ -39,13 +39,14 @@ public:
             renderTarget.data[i] = color;
             depthBuffer.data[i] = depth;
         }
+        lastClearColor = color;
+        lastClearDepth = depth;
+        resetMSAARenderTarget();
     }
 
     void setVertexBuffer(const std::vector<ShaderContext>& v) { vertex = v; }
 
     void setIndexBuffer(const std::vector<int>& i) { index = i; }
-
-    void setTextures(const std::vector<Texture2D3F>& t) { textures = t; }
 
     void setShaders(VertexShader* pVS, PixelShader* pPS) { pVertexShader = pVS; pPixelShader = pPS; }
 
@@ -54,6 +55,29 @@ public:
 protected:
     void rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2);
 
+    void mergeMSAARenderTarget();
+
+    void resetMSAARenderTarget()
+    {
+        // reset msaa render targets count
+        if (multiSampleCount != (int)tmpColorBuffer.size())
+        {
+            tmpColorBuffer.clear();
+            tmpDepthBuffer.clear();
+            tmpColorBuffer.reserve(multiSampleCount);
+            tmpDepthBuffer.reserve(multiSampleCount);
+        }
+        // clear all render targets
+        for (int i = 0; i < multiSampleCount; ++i)
+        {
+            tmpColorBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearColor);
+            tmpDepthBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearDepth);
+        }
+        // clear masks to 0
+        msMask.clear();
+        msMask.resize(renderTarget.width * renderTarget.height, 0);
+    }
+
 protected:
     std::vector<Vec2f> sampleCoords = {Vec2f(0.5f, 0.5f)};
     int multiSampleCount = 1;
@@ -61,7 +85,6 @@ protected:
     Texture2D1F depthBuffer;
     std::vector<ShaderContext> vertex;
     std::vector<int> index;
-    std::vector<Texture2D3F> textures;
     VertexShader* pVertexShader;
     PixelShader* pPixelShader;
     ShaderUniform uniforms;
@@ -75,6 +98,9 @@ protected:
     int width = 0;
     int height = 0;
     bool enableDepthTest = true;
+
+    Vec3f lastClearColor;
+    float lastClearDepth;
 };
 
 bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
