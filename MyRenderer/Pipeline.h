@@ -10,28 +10,19 @@ public:
 
     Texture2D3F& getRenderTarget() { return renderTarget; }
 
-    void setMultiSampleSState(const std::vector<Vec2f>& coords)
+    // after pipeline state is changed, render target and msaa render target will be recreated
+    void setPipelineState(const PipelineState& state)
     {
-        sampleCoords = coords;
-        if (sampleCoords.size() > 32)
+        if (this->state.width != state.width || this->state.height != state.height)
         {
-            sampleCoords.resize(32);
+            renderTarget = Texture2D3F(state.width, state.height);
+            depthBuffer = Texture2D1F(state.width, state.height);
         }
-        multiSampleCount = sampleCoords.size();
+        this->state = state;
+        resetMSAARenderTarget();
     }
 
-    void setRenderTargetState(int w, int h, bool enableDepth)
-    {
-        enableDepthTest = enableDepth;
-        if (width != w || height != h)
-        {
-            width = w;
-            height = h;
-            renderTarget = Texture2D3F(width, height);
-            depthBuffer = Texture2D1F(width, height);
-        }
-    }
-
+    // clear render target and msaa render target
     void clearRenderTarget(Vec3f color, float depth)
     {
         for (int i = 0; i < width * height; ++i)
