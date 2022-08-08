@@ -3,26 +3,29 @@
 #include "Texture.h"
 #include "PipelineState.h"
 
+#undef min
+#undef max
+
 enum MipMapMode
 {
-    NO_MIPMAP,
-    NEAREST,
-    LEARNER,
+    MIPMAP_MODE_NO_MIPMAP,
+    MIPMAP_MODE_NEAREST,
+    MIPMAP_MODE_LEARNER,
 };
 
 enum AddressMode
 {
-    REPEAT,
-    MIRRORED_REPEAT,
-    CLAMP_TO_EDGE,
-    CLAMP_TO_BORDER,
+    ADDRESS_MODE_REPEAT,
+    ADDRESS_MODE_MIRRORED_REPEAT,
+    ADDRESS_MODE_CLAMP_TO_EDGE,
+    ADDRESS_MODE_CLAMP_TO_BORDER,
 };
 
 enum FilterMode
 {
-    POINT,
-    LINEAR,
-    ANISOTROPIC
+    FILTER_MODE_POINT,
+    FILTER_MODE_LINEAR,
+    FILTER_MODE_ANISOTROPIC
 };
 
 
@@ -37,13 +40,13 @@ public:
 
         switch (mipmapMode)
         {
-        case NO_MIPMAP:
+        case MIPMAP_MODE_NO_MIPMAP:
             result = sampleFromUVLevel(tex, uv, 0, 0);
             break;
-        case NEAREST:
+        case MIPMAP_MODE_NEAREST:
             /* code */
             break;
-        case LEARNER:
+        case MIPMAP_MODE_LEARNER:
             /* code */
             break;
         default:
@@ -68,19 +71,19 @@ protected:
         T result;
         switch (addressMode)
         {
-        case REPEAT:
+        case ADDRESS_MODE_REPEAT:
             uv.u = rawUV.u >= 0.0f ? fmod(rawUV.u, 1.0f) : fmod(rawUV.u, 1.0f) + 1.0f;
             uv.v = rawUV.v >= 0.0f ? fmod(rawUV.v, 1.0f) : fmod(rawUV.v, 1.0f) + 1.0f;
             break;
-        case MIRRORED_REPEAT:
+        case ADDRESS_MODE_MIRRORED_REPEAT:
             uv.u = 1.0f - std::abs(fmod(std::abs(rawUV.u), 2.0f) - 1.0f);
             uv.u = 1.0f - std::abs(fmod(std::abs(rawUV.v), 2.0f) - 1.0f);
             break;
-        case CLAMP_TO_EDGE:
+        case ADDRESS_MODE_CLAMP_TO_EDGE:
             uv.u = clamp(rawUV.u, 0.0f, 1.0f);
             uv.v = clamp(rawUV.v, 0.0f, 1.0f);
             break;
-        case CLAMP_TO_BORDER:
+        case ADDRESS_MODE_CLAMP_TO_BORDER:
             if (rawUV.u > 1.0f || rawUV.u < 0.0f || rawUV.v > 1.0f || rawUV.v < 0.0f)
             {
                 return borderColor;
@@ -101,10 +104,10 @@ protected:
         Vec2f uvInTex = {float(stx) + uv.u * float(edx - stx), float(sty) + uv.v * float(edy - sty)};
         switch (filterMode)
         {
-        case POINT:
+        case FILTER_MODE_POINT:
             result = tex.rawat(int(uvInTex.x), int(uvInTex.y));
             break;
-        case LINEAR:
+        case FILTER_MODE_LINEAR:
         {
             int x0 = 0, y0 = 0, x1 = 0, y1 = 0;
             float ku, kv;
@@ -113,7 +116,7 @@ protected:
 
             // calculate 4 pixel coords and 2 factors to blend
             if (uv.u == 1.0f)
-            // if address mode is REPEAT, uv.u can't be 1.0f
+            // if address mode is ADDRESS_MODE_REPEAT, uv.u can't be 1.0f
             {
                 ku = 1.0f;
                 x0 = x1 = edx - 1;
@@ -123,8 +126,8 @@ protected:
             {
                 ku = 0.5f - fmodf(uvInTex.u, 1.0f);
                 x1 = int(uvInTex.u);
-                if(addressMode == REPEAT && x1 == stx)
-                // when x1 is the first left and address mode is REPEAT, the x0 should be the first right
+                if(addressMode == ADDRESS_MODE_REPEAT && x1 == stx)
+                // when x1 is the first left and address mode is ADDRESS_MODE_REPEAT, the x0 should be the first right
                 {
                     x0 = edx - 1;
                 }
@@ -138,8 +141,8 @@ protected:
             {
                 ku = 1.5f - fmodf(uvInTex.u, 1.0f);
                 x0 = int(uvInTex.u);
-                if(addressMode == REPEAT && x0 == edx - 1)
-                // when x0 is the first right and address mode is REPEAT, the x1 should be the first left
+                if(addressMode == ADDRESS_MODE_REPEAT && x0 == edx - 1)
+                // when x0 is the first right and address mode is ADDRESS_MODE_REPEAT, the x1 should be the first left
                 {
                     x1 = stx;
                 }
@@ -150,7 +153,7 @@ protected:
             }
 
             if (uv.v == 1.0f)
-            // if address mode is REPEAT, uv.v can't be 1.0f
+            // if address mode is ADDRESS_MODE_REPEAT, uv.v can't be 1.0f
             {
                 kv = 1.0f;
                 y0 = y1 = edy - 1;
@@ -160,8 +163,8 @@ protected:
             {
                 kv = 0.5f - fmodf(uvInTex.v, 1.0f);
                 y1 = int(uvInTex.v);
-                if(addressMode == REPEAT && y1 == sty)
-                // when y1 is the first bottom and address mode is REPEAT, the y0 should be the first top
+                if(addressMode == ADDRESS_MODE_REPEAT && y1 == sty)
+                // when y1 is the first bottom and address mode is ADDRESS_MODE_REPEAT, the y0 should be the first top
                 {
                     y0 = edy - 1;
                 }
@@ -175,8 +178,8 @@ protected:
             {
                 kv = 1.5f - fmodf(uvInTex.v, 1.0f);
                 y0 = int(uvInTex.v);
-                if(addressMode == REPEAT && y0 == edy - 1)
-                // when y0 is the first top and address mode is REPEAT, the y1 should be the first bottom
+                if(addressMode == ADDRESS_MODE_REPEAT && y0 == edy - 1)
+                // when y0 is the first top and address mode is ADDRESS_MODE_REPEAT, the y1 should be the first bottom
                 {
                     y1 = sty;
                 }
@@ -194,7 +197,7 @@ protected:
             result = r;
         }
             break;
-        case ANISOTROPIC:
+        case FILTER_MODE_ANISOTROPIC:
         {
             // TODO:
             
@@ -207,8 +210,8 @@ protected:
 
 
 protected:
-    AddressMode addressMode = CLAMP_TO_BORDER;
-    MipMapMode mipmapMode = NO_MIPMAP;
-    FilterMode filterMode = POINT;
+    AddressMode addressMode = ADDRESS_MODE_CLAMP_TO_BORDER;
+    MipMapMode mipmapMode = MIPMAP_MODE_NO_MIPMAP;
+    FilterMode filterMode = FILTER_MODE_POINT;
     T borderColor = {};
 };

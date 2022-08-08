@@ -7,8 +7,8 @@ void Pipeline::renderToTarget()
     float d;
     Vec3f color;
     // clear masks to 0
-    msMask.clear();
-    msMask.resize(renderTarget.width * renderTarget.height, 0);
+    msaaMask.clear();
+    msaaMask.resize(renderTarget.width * renderTarget.height, 0);
 
     // traverse all vertices, assemble every 3 vertices as 1 triangle
     for (i = 0; i < vertex.size() - 2; i += 3)
@@ -37,23 +37,23 @@ void Pipeline::renderToTarget()
     }
 
     // merge the tmp render-targets and tmp depth buffers
-    for (x = 0; x < width; ++x)
+    for (x = 0; x < state.width; ++x)
     {
-        for (y = 0; y < height; ++y)
+        for (y = 0; y < state.height; ++y)
         {
             c = 0;
             d = 2.0f;
             color = { 0.0f, 0.0f, 0.0f };
-            for (i = 0; i < multiSampleCount; ++i)
+            for (i = 0; i < state.msCount; ++i)
             {
-                if ((msMask[x + y * width] & (1U << i)) != 0)
+                if ((msaaMask[x + y * state.width] & (1U << i)) != 0)
                 {
                     ++c;
-                    if (d < tmpDepthBuffer[i].at(x, y))
+                    if (d < msaaDepthBuffer[i].at(x, y))
                     {
-                        d = tmpDepthBuffer[i].at(x, y);
+                        d = msaaDepthBuffer[i].at(x, y);
                     }
-                    color += tmpColorBuffer[i].at(x, y);
+                    color += msaaColorBuffer[i].at(x, y);
                 }
             }
             if (c > 0)
@@ -64,21 +64,55 @@ void Pipeline::renderToTarget()
     }
 }
 
+void Pipeline::presentToScreen(uint8_t* buffer)
+{
+    mergeMSAARenderTarget();
+    renderTarget.toBitmap(buffer);
+}
+
+void Pipeline::setPipelineState(const PipelineState& state)
+{
+    this->state = state;
+    resetRenderTargetState();
+    resetMSAARenderTarget();
+}
+
+void Pipeline::clearRenderTarget(Vec3f color, float depth)
+{
+    // clear msaa render target
+    for (int m = 0; m < state.msCount; ++m)
+    {
+        for (int i = 0; i < state.width * state.height; ++i)
+        {
+            msaaColorBuffer[m].data[i] = color;
+            msaaDepthBuffer[m].data[i] = depth;
+        }
+    }
+    // clear present render target
+    for (int i = 0; i < state.width * state.height; ++i)
+    {
+        renderTarget.data[i] = color;
+        depthBuffer.data[i] = depth;
+    }
+    lastClearColor = color;
+    lastClearDepth = depth;
+}
+
 void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2)
 {
     int xstart, xend, ystart, yend;
     int x0, x1, x2, y0, y1, y2;
     int x, y, i;
-    x0 = int((v0.v4f.at(SV_Position).x + 1.0f) / 2.0f * width);
-    x1 = int((v1.v4f.at(SV_Position).x + 1.0f) / 2.0f * width);
-    x2 = int((v2.v4f.at(SV_Position).x + 1.0f) / 2.0f * width);
-    y0 = int((v0.v4f.at(SV_Position).y + 1.0f) / 2.0f * height);
-    y1 = int((v1.v4f.at(SV_Position).y + 1.0f) / 2.0f * height);
-    y2 = int((v2.v4f.at(SV_Position).y + 1.0f) / 2.0f * height);
+    x0 = int((v0.v4f.at(SV_Position).x + 1.0f) / 2.0f * state.width);
+    x1 = int((v1.v4f.at(SV_Position).x + 1.0f) / 2.0f * state.width);
+    x2 = int((v2.v4f.at(SV_Position).x + 1.0f) / 2.0f * state.width);
+    y0 = int((v0.v4f.at(SV_Position).y + 1.0f) / 2.0f * state.height);
+    y1 = int((v1.v4f.at(SV_Position).y + 1.0f) / 2.0f * state.height);
+    y2 = int((v2.v4f.at(SV_Position).y + 1.0f) / 2.0f * state.height);
     xstart =std::max(std::min({ x0, x1, x2 }), 0);
-    xend = std::min(std::max({ x0, x1, x2 }) + 1, width);
+    xend = std::min(std::max({ x0, x1, x2 }) + 1, state.width);
     ystart = std::max(std::min({ y0, y1, y2 }), 0);
-    yend = std::min(std::max({ y0, y1, y2 }) + 1, height);
+    yend = std::min(std::max({ y0, y1, y2 }) + 1, state.height);
     // traverse all possible pixels
     for (x = xstart; x < xend; ++x)
     {
@@ -90,20 +124,19 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             Vec2f avgCenter = { 0.0f, 0.0f };
             int coverCount = 0;
             int mask = 0;
-            for (i = 0; i < multiSampleCount; ++i)
+            for (i = 0; i < state.msCount; ++i)
             {
                 // convert form screen to NDC
                 Vec2f p = {
-                    (float(x) + sampleCoords[i].x) / float(width) * 2.0f - 1.0f,
-                    (float(y) + sampleCoords[i].y) / float(height) * 2.0f - 1.0f };
+                    (float(x) + state.sampleCoords[i].x) / float(state.width) * 2.0f - 1.0f,
+                    (float(y) + state.sampleCoords[i].y) / float(state.height) * 2.0f - 1.0f };
                 if (pointInTriangle(p,
                     v0.v4f.at(SV_Position).xy(),
                     v1.v4f.at(SV_Position).xy(),
                     v2.v4f.at(SV_Position).xy() ))
                 {
-                    avgCenter += sampleCoords[i];
+                    avgCenter += state.sampleCoords[i];
                     ++coverCount;
-                    //msMask[x + y * width] |= (1 << i);
                     mask |= (1 << i);
                 }
             }
@@ -115,8 +148,8 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 Vec3f factor;
                 ShaderContext pixelIn;
                 Vec2f q = {
-                    (float(x) + avgCenter.x) / width * 2.0f - 1.0f,
-                    (float(y) + avgCenter.y) / height * 2.0f - 1.0f };
+                    (float(x) + avgCenter.x) / state.width * 2.0f - 1.0f,
+                    (float(y) + avgCenter.y) / state.height * 2.0f - 1.0f };
                 factor = getPerspectiveCorrectFactor(
                     q,
                     v0.v4f.at(SV_Position),
@@ -129,23 +162,23 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 result = pPixelShader->excute(pixelIn, uniforms, state);
             }
             // check which sample is used, set value to the tmp target
-            for (i = 0; i < multiSampleCount; ++i)
+            for (i = 0; i < state.msCount; ++i)
             {
                 if ((mask & (1 << i)) != 0)
                 {
                     // if the new depth is smaller,
                     // or this sample have not been writen
-                    if (tmpDepthBuffer[i].data[x + y * width] < depth ||
-                        (msMask[x + y * width] & (1 << i)) == 0)
+                    if (msaaDepthBuffer[i].data[x + y * state.width] < depth ||
+                        (msaaMask[x + y * state.width] & (1 << i)) == 0)
                     {
-                        tmpColorBuffer[i].data[x + y * width] = result.xyz();
-                        tmpDepthBuffer[i].data[x + y * width] = depth;
+                        msaaColorBuffer[i].data[x + y * state.width] = result.xyz();
+                        msaaDepthBuffer[i].data[x + y * state.width] = depth;
                     }
                 }
             }
             // write the sample mask to buffer
-            msMask[x + y * width] = mask;
-            // operation for pixel end
+            msaaMask[x + y * state.width] = mask;
+            // END OF operation for pixels
         }
     }
 }
@@ -155,23 +188,23 @@ void Pipeline::mergeMSAARenderTarget()
     int i, c, x, y;
     float d;
     Vec3f color;
-    for (x = 0; x < width; ++x)
+    for (x = 0; x < state.width; ++x)
     {
-        for (y = 0; y < height; ++y)
+        for (y = 0; y < state.height; ++y)
         {
             c = 0;
             d = 2.0f;
             color = { 0.0f, 0.0f, 0.0f };
-            for (i = 0; i < multiSampleCount; ++i)
+            for (i = 0; i < state.msCount; ++i)
             {
-                if ((msMask[x + y * width] & (1U << i)) != 0)
+                if ((msaaMask[x + y * state.width] & (1U << i)) != 0)
                 {
                     ++c;
-                    if (d < tmpDepthBuffer[i].at(x, y))
+                    if (d < msaaDepthBuffer[i].at(x, y))
                     {
-                        d = tmpDepthBuffer[i].at(x, y);
+                        d = msaaDepthBuffer[i].at(x, y);
                     }
-                    color += tmpColorBuffer[i].at(x, y);
+                    color += msaaColorBuffer[i].at(x, y);
                 }
             }
             if (c > 0)

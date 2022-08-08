@@ -45,6 +45,9 @@
     <ClInclude Include="Sampler.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="simplePipeline.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MyRenderer.cpp">

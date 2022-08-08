@@ -2,6 +2,8 @@
 
 #include "MathHelper.h"
 
+#undef max
+#undef min
 // the left top of the texture is point (0.0, 0.0)
 
 template <class T>
@@ -9,7 +11,7 @@ class Texture2D
 {
 public:
     // default : 0 X 0 texture
-    Texture2D() : this(0, 0);
+    Texture2D() : Texture2D(0, 0) {}
 
     // gen from buffer
     Texture2D(size_t w, size_t h, T* buffer, bool mipmap = false)
@@ -27,7 +29,7 @@ public:
                 data.push_back(T[i]);
             }
         }
-        else if (std::__popcount(width) != 1 || std::__popcount(height) != 1)
+        else if (std::_Popcount(width) != 1 || std::_Popcount(height) != 1)
             // try to gen mipmap but the width or height is not pow(2, n)
         {
             width = 0;
@@ -41,7 +43,7 @@ public:
         {
             rawWidth = width * 2;
             rawHeight = height * 2;
-            mipmapLevel = (size_t)std::log2(std::min(width, height));
+            mipmapLevel = (size_t)(std::log2(std::min(width, height)));
             data = std::vector<T>(rawWidth * rawHeight);
             for (int i = 0; i < w; ++i)
             {
@@ -66,7 +68,7 @@ public:
             mipmapLevel = 0;
             data = std::vector<T>(rawWidth * rawHeight, initColor);
         }
-        else if (std::__popcount(width) != 1 || std::__popcount(height) != 1)
+        else if (std::_Popcount(width) != 1 || std::_Popcount(height) != 1)
             // try to gen mipmap but the width or height is not pow(2, n)
         {
             width = 0;
@@ -81,20 +83,20 @@ public:
             rawWidth = width * 2;
             rawHeight = height * 2;
             data = std::vector<T>(rawWidth * rawHeight, initColor);
-            mipmapLevel = (size_t)std::log2(std::min(width, height));
+            mipmapLevel = (size_t)(std::log2(std::min(width, height)));
         }
     }
 
     Texture2D(const Texture2D& tex) = default;
 
-    Texture2D(Texture2D&& tex)
+    Texture2D(Texture2D&& tex) noexcept
         : width(tex.width), height(tex.height),
         rawWidth(tex.rawWidth), rawHeight(tex.rawHeight),
         data(std::move(tex.data)), mipmapLevel(tex.mipmapLevel) {}
 
     Texture2D& operator= (const Texture2D& tex) = default;
 
-    Texture2D& operator= (Texture2D&& tex)
+    Texture2D& operator= (Texture2D&& tex) noexcept
     {
         this->width = tex.width;
         this->height = tex.height;
@@ -110,9 +112,15 @@ public:
     // this function only outputs the level0 texture
     void toBitmap(uint8_t* pDest) const
     {
-        for (int row = 0; row < height; ++row)
+        float* fs = (float*)data.data();
+        int fcount = sizeof(T) / sizeof(float);
+        int pix_count = rawWidth * rawHeight;
+        for (int i = 0; i < pix_count; ++i)
         {
-            memcpy(pDest + row * width * sizeof(T), data.data() + row * rawWidth, width * sizeof(T));
+            for (int j = 0; j < fcount; ++j)
+            {
+                pDest[i * fcount + j] = uint8_t(clamp(fs[i * fcount + fcount - j - 1], 0.0f, 1.0f) * 255.0f);
+            }
         }
     }
 
@@ -152,8 +160,8 @@ protected:
 
 public:
     // rawat(x, y), directly returns the texture data
-    T &rawat(int x, int y) { return data[rawIndex(x, y)]; }
-    const T &rawat(int x, int y) const { return data[rawIndex(x, y)]; }
+    T& rawat(int x, int y) { return data[rawIndex(x, y)]; }
+    const T& rawat(int x, int y) const { return data[rawIndex(x, y)]; }
 
     // at(x, y), just used for level0
     T& at(int x, int y) { return get(x, y, 0); }
@@ -198,7 +206,7 @@ public:
         return data[rawIndex(rawx, rawy)];
     }
 
-    inline size_t rawIndex(int x, int y)
+    inline size_t rawIndex(int x, int y) const
     {
         return x + y * rawWidth;
     }

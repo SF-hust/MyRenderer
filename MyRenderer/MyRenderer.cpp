@@ -2,10 +2,11 @@
 //
 
 #include "framework.h"
-#include "MyRenderer.h"
-#include "Pipeline.h"
 #include <objidl.h>
 #include <gdiplus.h>
+#include "MyRenderer.h"
+#include "Pipeline.h"
+#include "simplePipeline.h"
 using namespace Gdiplus;
 #pragma comment (lib,"Gdiplus.lib")
 
@@ -30,6 +31,9 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(hPrevInstance);
     UNREFERENCED_PARAMETER(lpCmdLine);
 
+    initSimplePipeline();
+    simPipeline.clearRenderTarget({ 1.0f, 0.5f, 0.5f }, 1.0f);
+    simPipeline.presentToScreen(bitData);
     // TODO: 在此处放置代码。
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR           gdiplusToken;
@@ -122,11 +126,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    return TRUE;
 }
 
-BYTE bitData[800 * 600 * 3];
 void OnPaint(HDC hdc)
 {
-    static Texture2D3F tex(800, 600);
-
     Graphics graphics(hdc);
 
     BITMAPINFO bmi;
@@ -137,7 +138,6 @@ void OnPaint(HDC hdc)
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biBitCount = 24;
-    tex.toBitmap(bitData);
     Gdiplus::Bitmap* bitmap = new Gdiplus::Bitmap(&bmi, bitData);
 
     graphics.DrawImage(bitmap, 0, 0);

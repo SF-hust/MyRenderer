@@ -4,12 +4,13 @@
 #include <algorithm>
 #include <vector>
 #include <assert.h>
-
+#undef min
+#undef max
 
 template<typename T>
 inline T clamp(T x, T mi, T ma)
 {
-    return max(min(x, ma), mi);
+    return std::max(std::min(x, ma), mi);
 }
 
 

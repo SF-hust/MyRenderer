@@ -3,46 +3,27 @@
 #include "Shader.h"
 #include "PipelineState.h"
 
+
+/*
+* class Pipeline
+* usage :
+* 1. set pipeline sim_pipelineState, vertex and index input, shaders, uniforms
+* 2. call clear render target
+* 3. call renderToTarget to draw objects to the msaa buffer
+* 4. repeat 3
+* 5. call presentToScreen to merge the msaa buffer to the outer buffer
+* 6. repeat 2
+*/
 class Pipeline
 {
 public:
     void renderToTarget();
 
-    Texture2D3F& getRenderTarget() { return renderTarget; }
+    void presentToScreen(uint8_t* buffer);
 
-    void setMultiSampleSState(const std::vector<Vec2f>& coords)
-    {
-        sampleCoords = coords;
-        if (sampleCoords.size() > 32)
-        {
-            sampleCoords.resize(32);
-        }
-        multiSampleCount = sampleCoords.size();
-    }
+    void setPipelineState(const PipelineState& state);
 
-    void setRenderTargetState(int w, int h, bool enableDepth)
-    {
-        enableDepthTest = enableDepth;
-        if (width != w || height != h)
-        {
-            width = w;
-            height = h;
-            renderTarget = Texture2D3F(width, height);
-            depthBuffer = Texture2D1F(width, height);
-        }
-    }
-
-    void clearRenderTarget(Vec3f color, float depth)
-    {
-        for (int i = 0; i < width * height; ++i)
-        {
-            renderTarget.data[i] = color;
-            depthBuffer.data[i] = depth;
-        }
-        lastClearColor = color;
-        lastClearDepth = depth;
-        resetMSAARenderTarget();
-    }
+    void clearRenderTarget(Vec3f color, float depth);
 
     void setVertexBuffer(const std::vector<ShaderContext>& v) { vertex = v; }
 
@@ -60,27 +41,35 @@ protected:
     void resetMSAARenderTarget()
     {
         // reset msaa render targets count
-        if (multiSampleCount != (int)tmpColorBuffer.size())
+        if (state.msCount != (int)msaaColorBuffer.size())
         {
-            tmpColorBuffer.clear();
-            tmpDepthBuffer.clear();
-            tmpColorBuffer.reserve(multiSampleCount);
-            tmpDepthBuffer.reserve(multiSampleCount);
+            msaaColorBuffer.clear();
+            msaaDepthBuffer.clear();
+            msaaColorBuffer.reserve(state.msCount);
+            msaaDepthBuffer.reserve(state.msCount);
         }
         // clear all render targets
-        for (int i = 0; i < multiSampleCount; ++i)
+        for (int i = 0; i < state.msCount; ++i)
         {
-            tmpColorBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearColor);
-            tmpDepthBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearDepth);
+            msaaColorBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearColor);
+            msaaDepthBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearDepth);
         }
         // clear masks to 0
-        msMask.clear();
-        msMask.resize(renderTarget.width * renderTarget.height, 0);
+        msaaMask.clear();
+        msaaMask.resize(renderTarget.width * renderTarget.height, 0);
     }
 
+    void resetRenderTargetState()
+    {
+        if (renderTarget.width != state.width || renderTarget.height != state.height)
+        {
+            renderTarget = Texture2D3F(state.width, state.height);
+            depthBuffer = Texture2D1F(state.width, state.height);
+        }
+    }
+
+
 protected:
-    std::vector<Vec2f> sampleCoords = {Vec2f(0.5f, 0.5f)};
-    int multiSampleCount = 1;
     Texture2D3F renderTarget;
     Texture2D1F depthBuffer;
     std::vector<ShaderContext> vertex;
@@ -89,15 +78,11 @@ protected:
     PixelShader* pPixelShader;
     ShaderUniform uniforms;
 
-    std::vector<Texture2D3F> tmpColorBuffer;
-    std::vector<Texture2D1F> tmpDepthBuffer;
-    std::vector<uint32_t> msMask;
+    std::vector<Texture2D3F> msaaColorBuffer;
+    std::vector<Texture2D1F> msaaDepthBuffer;
+    std::vector<uint32_t> msaaMask;
 
     PipelineState state;
-
-    int width = 0;
-    int height = 0;
-    bool enableDepthTest = true;
 
     Vec3f lastClearColor;
     float lastClearDepth;
