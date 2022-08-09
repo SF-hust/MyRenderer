@@ -2,16 +2,8 @@
 
 void Pipeline::renderToTarget()
 {
-    // create tmp render-targets, for multi-sample
-    int i, c, x, y;
-    float d;
-    Vec3f color;
-    // clear masks to 0
-    msaaMask.clear();
-    msaaMask.resize(renderTarget.width * renderTarget.height, 0);
-
     // traverse all vertices, assemble every 3 vertices as 1 triangle
-    for (i = 0; i < vertex.size() - 2; i += 3)
+    for (int i = 0; i < vertex.size() - 2; i += 3)
     {
         ShaderContext vOut0, vOut1, vOut2;
         // excute vertex shader for 3 vertices, tranform to clipping space
@@ -21,46 +13,13 @@ void Pipeline::renderToTarget()
         // TODO: clipping triangle
 
         // do perspective division
-        vOut0.v4f[SV_Position].x /= vOut0.v4f[SV_Position].w;
-        vOut0.v4f[SV_Position].y /= vOut0.v4f[SV_Position].w;
-        vOut0.v4f[SV_Position].z /= vOut0.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].x /= vOut1.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].y /= vOut1.v4f[SV_Position].w;
-        vOut1.v4f[SV_Position].z /= vOut1.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].x /= vOut2.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].y /= vOut2.v4f[SV_Position].w;
-        vOut2.v4f[SV_Position].z /= vOut2.v4f[SV_Position].w;
+        doPerspectiveDivision(vOut0.v4f[SV_Position]);
+        doPerspectiveDivision(vOut1.v4f[SV_Position]);
+        doPerspectiveDivision(vOut2.v4f[SV_Position]);
         // TODO: tranform to NDC space
         
         // raster, and shade the pixels
         rasterTriangle(vOut0, vOut1, vOut2);
-    }
-
-    // merge the tmp render-targets and tmp depth buffers
-    for (x = 0; x < state.width; ++x)
-    {
-        for (y = 0; y < state.height; ++y)
-        {
-            c = 0;
-            d = 2.0f;
-            color = { 0.0f, 0.0f, 0.0f };
-            for (i = 0; i < state.msCount; ++i)
-            {
-                if ((msaaMask[x + y * state.width] & (1U << i)) != 0)
-                {
-                    ++c;
-                    if (d < msaaDepthBuffer[i].at(x, y))
-                    {
-                        d = msaaDepthBuffer[i].at(x, y);
-                    }
-                    color += msaaColorBuffer[i].at(x, y);
-                }
-            }
-            if (c > 0)
-            {
-                renderTarget.at(x, y) = color / float(c);
-            }
-        }
     }
 }
 
@@ -113,6 +72,7 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
     xend = std::min(std::max({ x0, x1, x2 }) + 1, state.width);
     ystart = std::max(std::min({ y0, y1, y2 }), 0);
     yend = std::min(std::max({ y0, y1, y2 }) + 1, state.height);
+    // TODO: process per 2x2 pixels
     // traverse all possible pixels
     for (x = xstart; x < xend; ++x)
     {
@@ -123,7 +83,7 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             float depth = 1.0f;
             Vec2f avgCenter = { 0.0f, 0.0f };
             int coverCount = 0;
-            int mask = 0;
+            int newMask = 0;
             for (i = 0; i < state.msCount; ++i)
             {
                 // convert form screen to NDC
@@ -137,7 +97,7 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 {
                     avgCenter += state.sampleCoords[i];
                     ++coverCount;
-                    mask |= (1 << i);
+                    newMask |= (1 << i);
                 }
             }
             // sample from the center of the covered sample points
@@ -161,10 +121,10 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 // call pixel shader
                 result = pPixelShader->excute(pixelIn, uniforms, state);
             }
-            // check which sample is used, set value to the tmp target
+            // check which samples are used, set value to the msaa target
             for (i = 0; i < state.msCount; ++i)
             {
-                if ((mask & (1 << i)) != 0)
+                if ((newMask & (1 << i)) != 0)
                 {
                     // if the new depth is smaller,
                     // or this sample have not been writen
@@ -177,7 +137,7 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 }
             }
             // write the sample mask to buffer
-            msaaMask[x + y * state.width] = mask;
+            msaaMask[x + y * state.width] = newMask;
             // END OF operation for pixels
         }
     }
@@ -224,9 +184,14 @@ bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
 Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
 {
     Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
-    float c0 = rawFactor[0] / p0.w;
-    float c1 = rawFactor[1] / p1.w;
-    float c2 = rawFactor[2] / p2.w;
+    return toPerspectiveCorrectFactor(rawFactor, p0, p1, p2);
+}
+
+Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
+{
+    float c0 = f[0] / p0.w;
+    float c1 = f[1] / p1.w;
+    float c2 = f[2] / p2.w;
     float c = c0 + c1 + c2;
     Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
     return correctedFactor;
@@ -273,4 +238,11 @@ Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
     factor[1] = Vector_cross(c, a) / (-axb);
     factor[2] = 1.0f - factor[0] - factor[1];
     return factor;
+}
+
+void doPerspectiveDivision(Vec4f& v)
+{
+    v.x /= v.w;
+    v.y /= v.w;
+    v.z /= v.w;
 }

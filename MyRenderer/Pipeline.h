@@ -21,9 +21,9 @@ public:
 
     void presentToScreen(uint8_t* buffer);
 
-    void setPipelineState(const PipelineState& state);
-
     void clearRenderTarget(Vec3f color, float depth);
+
+    void setPipelineState(const PipelineState& state);
 
     void setVertexBuffer(const std::vector<ShaderContext>& v) { vertex = v; }
 
@@ -48,7 +48,7 @@ protected:
             msaaColorBuffer.reserve(state.msCount);
             msaaDepthBuffer.reserve(state.msCount);
         }
-        // clear all render targets
+        // clear all msaa render targets
         for (int i = 0; i < state.msCount; ++i)
         {
             msaaColorBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearColor);
@@ -61,6 +61,7 @@ protected:
 
     void resetRenderTargetState()
     {
+        // if size of the render target changed, recreate it
         if (renderTarget.width != state.width || renderTarget.height != state.height)
         {
             renderTarget = Texture2D3F(state.width, state.height);
@@ -92,6 +93,10 @@ bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
 
 Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2);
 
+Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2);
+
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2);
 
 Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
+
+void doPerspectiveDivision(Vec4f& v);
