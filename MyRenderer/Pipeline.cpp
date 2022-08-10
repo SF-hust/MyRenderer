@@ -6,13 +6,14 @@ const Vec2i Pipeline::pixel2x2Steps[4] = {Vec2i(0, 0), Vec2i(1, 0), Vec2i(0, 1),
 void Pipeline::renderToTarget()
 {
     // traverse all vertices, assemble every 3 vertices as 1 triangle
-    for (int i = 0; i < vertex.size() - 2; i += 3)
+    //for (int i = 0; i < vertices.size() - 2; i += 3)
+    for (int i = 0; i < indecies.size() - 2; i += 3)
     {
         ShaderContext vOut0, vOut1, vOut2;
         // excute vertex shader for 3 vertices, tranform to clipping space
-        pVertexShader->excute(vertex[i], vOut0, uniforms, state);
-        pVertexShader->excute(vertex[i + 1], vOut1, uniforms, state);
-        pVertexShader->excute(vertex[i + 2], vOut2, uniforms, state);
+        pVertexShader->excute(vertices[indecies[i + 0]], vOut0, uniforms, state);
+        pVertexShader->excute(vertices[indecies[i + 1]], vOut1, uniforms, state);
+        pVertexShader->excute(vertices[indecies[i + 2]], vOut2, uniforms, state);
         if(shouldClip(vOut0.v4f[SV_Position]) || shouldClip(vOut1.v4f[SV_Position]) || shouldClip(vOut2.v4f[SV_Position]))
         {
             // TODO: clippingTriangle() has no implementation
@@ -20,7 +21,7 @@ void Pipeline::renderToTarget()
             for(int j = 0; j < clippedVertex.size() - 2; j += 3)
             {
                 // do perspective division
-                doPerspectiveDivision(clippedVertex[i].v4f[SV_Position]);
+                doPerspectiveDivision(clippedVertex[i + 0].v4f[SV_Position]);
                 doPerspectiveDivision(clippedVertex[i + 1].v4f[SV_Position]);
                 doPerspectiveDivision(clippedVertex[i + 2].v4f[SV_Position]);
                 // TODO?: tranform to NDC space
@@ -289,8 +290,8 @@ void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in
 Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
 {
     Vec2f c = p - v2;
-    Vec2f a = v1 - v2;
-    Vec2f b = v0 - v2;
+    Vec2f a = v0 - v2;
+    Vec2f b = v1 - v2;
     float axb = Vector_cross(a, b);
     Vec3f factor;
     factor[0] = Vector_cross(c, b) / axb;

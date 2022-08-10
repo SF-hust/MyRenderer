@@ -6,7 +6,7 @@
 /*
 * class Pipeline
 * usage :
-* 1. set pipeline sim_pipelineState, vertex and index input, shaders, uniforms
+* 1. set pipeline sim_pipelineState, vertices and indecies input, shaders, uniforms
 * 2. call clear render target
 * 3. call renderToTarget to draw objects to the msaa buffer
 * 4. repeat 3
@@ -24,9 +24,9 @@ public:
 
     void setPipelineState(const PipelineState& state);
 
-    void setVertexBuffer(const std::vector<ShaderContext>& v) { vertex = v; }
+    void setVertexBuffer(const std::vector<ShaderContext>& v) { vertices = v; }
 
-    void setIndexBuffer(const std::vector<int>& i) { index = i; }
+    void setIndexBuffer(const std::vector<int>& i) { indecies = i; }
 
     void setShaders(VertexShader* pVS, PixelShader* pPS) { pVertexShader = pVS; pPixelShader = pPS; }
 
@@ -74,8 +74,8 @@ protected:
 protected:
     Texture2D3F renderTarget;
     Texture2D1F depthBuffer;
-    std::vector<ShaderContext> vertex;
-    std::vector<int> index;
+    std::vector<ShaderContext> vertices;
+    std::vector<int> indecies;
     VertexShader* pVertexShader;
     PixelShader* pPixelShader;
     ShaderUniform uniforms;
