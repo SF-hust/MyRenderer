@@ -32,7 +32,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     initSimplePipeline();
-    simPipeline.clearRenderTarget({ 0.5f, 0.5f, 0.5f }, 1.0f);
+    simPipeline.clearRenderTarget({ 0.0f, 0.0f, 0.0f }, 1.0f);
     simPipeline.renderToTarget();
     simPipeline.presentToScreen(bitData);
     //memcpy(screenData, bitData, sizeof(bitData));

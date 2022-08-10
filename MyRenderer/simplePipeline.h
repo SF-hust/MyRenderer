@@ -4,8 +4,8 @@
 
 constexpr int SC_COLOR = 2;
 
-constexpr int screenWidth = 200;
-constexpr int screenHeight = 200;
+constexpr int screenWidth = 100;
+constexpr int screenHeight = 100;
 constexpr int screenScale = 4;
 
 std::vector<ShaderContext> sim_vertices(3);
@@ -47,7 +47,21 @@ SimplePS sim_ps;
 
 void initSimplePipeline()
 {
+    /*
+    sim_pipelineState.msCount = 1;
+    sim_pipelineState.sampleCoords = {
+        {0.5f, 0.5f}
+    };
+    //*/
+
     //*
+    sim_pipelineState.msCount = 4;
+    sim_pipelineState.sampleCoords = {
+        {0.25f, 0.25f}, {0.25f, 0.75f}, {0.75f, 0.25f}, {0.75f, 0.75f}
+    };
+    //*/
+
+    /*
     sim_pipelineState.msCount = 16;
     sim_pipelineState.sampleCoords = {
         {0.125f, 0.125f}, {0.125f, 0.375f}, {0.125f, 0.625f}, {0.125f, 0.875f},
@@ -55,6 +69,7 @@ void initSimplePipeline()
         {0.625f, 0.125f}, {0.625f, 0.375f}, {0.625f, 0.625f}, {0.625f, 0.875f},
         {0.875f, 0.125f}, {0.875f, 0.375f}, {0.875f, 0.625f}, {0.875f, 0.875f},
     };
+
     //*/
     sim_pipelineState.width = screenWidth;
     sim_pipelineState.height = screenHeight;
