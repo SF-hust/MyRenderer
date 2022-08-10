@@ -89,6 +89,8 @@ protected:
 
     Vec3f lastClearColor;
     float lastClearDepth;
+
+    static const Vec2i pixel2x2Steps[4];
 };
 
 bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);

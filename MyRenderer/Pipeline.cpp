@@ -1,5 +1,8 @@
 #include "Pipeline.h"
 
+const Vec2i Pipeline::pixel2x2Steps[4] = {Vec2i(0, 0), Vec2i(1, 0), Vec2i(0, 1), Vec2i(1, 1)};
+
+
 void Pipeline::renderToTarget()
 {
     // traverse all vertices, assemble every 3 vertices as 1 triangle
@@ -76,79 +79,107 @@ void Pipeline::clearRenderTarget(Vec3f color, float depth)
 
 void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2)
 {
-    // TODO: process per 2x2 pixels
     // TODO?: test per tile of 4x8 pixels
     int xstart, xend, ystart, yend;
-    int x, y, i;
+    int x, y, i, j;
     // transform input positions to screen space
     Vec2f p0 = (v0.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
     Vec2f p1 = (v1.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
     Vec2f p2 = (v2.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
+    const Vec4f& pos0 = v0.v4f.at(SV_Position);
+    const Vec4f& pos1 = v1.v4f.at(SV_Position);
+    const Vec4f& pos2 = v2.v4f.at(SV_Position);
     // get the bounding box of triangle, from (xstart, ystart) to (xend, yend)(not include)
     xstart = std::max((int)std::min({ p0.x, p1.x, p2.x }), 0);
     xend = std::min((int)std::max({ p0.x, p1.x, p2.x }) + 1, state.width);
     ystart = std::max((int)std::min({ p0.y, p1.y, p2.y }), 0);
     yend = std::min((int)std::max({ p0.y, p1.y, p2.y }) + 1, state.height);
+    // for processing 2x2 pixels
+    xstart = xstart & (~1);
+    xend = (xend + 1) & (~1);
+    ystart = ystart & (~1);
+    yend = (yend + 1) & (~1);
     // traverse all possible pixels
-    for (x = xstart; x < xend; ++x)
+    for (x = xstart; x < xend; x += 2)
     {
-        for (y = ystart; y < yend; ++y)
+        for (y = ystart; y < yend; y += 2)
         {
-            // calculate which samples should be used
-            Vec4f result;
-            float newDepth = 1.0f;
-            Vec2f avgCenter = { 0.0f, 0.0f };
-            int coverCount = 0;
-            uint32_t newMask = 0;
-            for (i = 0; i < state.msCount; ++i)
+            Vec2f avgCenters[4] = { {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f}, {0.0f, 0.0f} };
+            // if one of the 2x2 pixels should shade, the bit would be set to 1
+            uint32_t shadingMask = 0;
+            uint32_t newMasks[4] = {0U, 0U, 0U, 0U};
+            for(j = 0; j < 4; j++)
             {
-                Vec2f p = Vec2f(float(x) + state.sampleCoords[i].x, float(y) + state.sampleCoords[i].y);
-                // test if triangle covers this sample
-                if (pointInTriangle(p, p0, p1, p2))
+                int coverCount = 0;
+                // (px, py) is the real coord of this very pixel
+                int px = x + pixel2x2Steps[j].x;
+                int py = y + pixel2x2Steps[j].y;
+                for (i = 0; i < state.msCount; ++i)
                 {
-                    avgCenter += state.sampleCoords[i];
-                    ++coverCount;
-                    newMask |= (1U << i);
-                }
-            }
-            // sample from the center of the covered sample points
-            avgCenter /= float(coverCount);
-            // if this triangle covers at least 1 sample, call pixel shader to calculate color of this pixel
-            if (coverCount > 0)
-            {
-                Vec3f factor;
-                ShaderContext pixelIn;
-                Vec2f q = {
-                    (float(x) + avgCenter.x) / state.width * 2.0f - 1.0f,
-                    (float(y) + avgCenter.y) / state.height * 2.0f - 1.0f };
-                factor = getPerspectiveCorrectFactor(
-                    q,
-                    v0.v4f.at(SV_Position),
-                    v1.v4f.at(SV_Position),
-                    v2.v4f.at(SV_Position));
-                // lerp the vertex properties
-                shaderContextLerp(pixelIn, factor, v0, v1, v2);
-                newDepth = pixelIn.v4f[SV_Position].z;
-                // call pixel shader
-                result = pPixelShader->excute(pixelIn, uniforms, state);
-            }
-            // check which samples are used, set value to the msaa target
-            for (i = 0; i < state.msCount; ++i)
-            {
-                if ((newMask & (1U << i)) != 0U)
-                {
-                    // if the new depth is smaller,
-                    // or this sample have not been writen
-                    if (msaaDepthBuffer[i].data[x + y * state.width] < newDepth ||
-                        (msaaMask[x + y * state.width] & (1U << i)) == 0U)
+                    Vec2f p = Vec2f(float(px) + state.sampleCoords[i].x, float(py) + state.sampleCoords[i].y);
+                    // test if triangle covers this sample
+                    if (pointInTriangle(p, p0, p1, p2))
                     {
-                        msaaColorBuffer[i].data[x + y * state.width] = result.xyz();
-                        msaaDepthBuffer[i].data[x + y * state.width] = newDepth;
+                        avgCenters[j] += state.sampleCoords[i];
+                        ++coverCount;
+                        newMasks[j] |= (1U << i);
                     }
                 }
+                // get the average center of covered msaa sample points
+                // if triangle covers no sample, set the center to (0.5f, 0.5f)
+                if(coverCount > 0)
+                {
+                    avgCenters[j] /= float(coverCount);
+                    // if triangle covers at list 1 sample in 4 pixels, shade the 4 pixels
+                    shadingMask |= (1U << j);
+                }
+                else
+                {
+                    avgCenters[j] = Vec2f(0.5f, 0.5f);
+                }
             }
-            // write the sample mask to buffer
-            msaaMask[x + y * state.width] = newMask;
+            if(shadingMask == 0U)
+            {
+                continue;
+            }
+            // gen pixel input for 2x2 pixels
+            ShaderContext pIn[4];
+            Vec3f f00 = getPerspectiveCorrectFactor(avgCenters[0], pos0, pos1, pos2);
+            Vec3f f10 = getPerspectiveCorrectFactor(avgCenters[1], pos0, pos1, pos2);
+            Vec3f f01 = getPerspectiveCorrectFactor(avgCenters[2], pos0, pos1, pos2);
+            Vec3f f11 = getPerspectiveCorrectFactor(avgCenters[3], pos0, pos1, pos2);
+            shaderContextLerp(pIn[0], f00, v0, v1, v2);
+            shaderContextLerp(pIn[1], f10, v0, v1, v2);
+            shaderContextLerp(pIn[2], f01, v0, v1, v2);
+            shaderContextLerp(pIn[3], f11, v0, v1, v2);
+            // shade the covered pixel, and get the depth
+            for(j = 0; j < 4; j++)
+            {
+                if(shadingMask | (1U << j)  != 0)
+                {
+                    float newDepth = pIn[j].v4f[SV_Position].z;
+                    Vec4f color = pPixelShader->excute(pIn[j], uniforms, state);
+                    for (i = 0; i < state.msCount; ++i)
+                    {
+                        if ((newMasks[j] & (1U << i)) != 0U)
+                        {
+                            // if the new depth is smaller,
+                            // or this sample have not been writen
+                            if (msaaDepthBuffer[i].data[x + y * state.width] < newDepth ||
+                                (msaaMask[x + y * state.width] & (1U << i)) == 0U)
+                            {
+                                msaaColorBuffer[i].data[x + y * state.width] = color.xyz();
+                                msaaDepthBuffer[i].data[x + y * state.width] = newDepth;
+                            }
+                        }
+                    }
+                    // (px, py) is the real coord of this very pixel
+                    int px = x + pixel2x2Steps[j].x;
+                    int py = y + pixel2x2Steps[j].y;
+                    // refresh the msaa sample mask
+                    msaaMask[px + py * state.width] |= newMasks[j];
+                }
+            }
             // END OF operation for pixels
         }
     }
