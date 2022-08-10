@@ -152,6 +152,11 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             shaderContextLerp(pIn[1], f10, v0, v1, v2);
             shaderContextLerp(pIn[2], f01, v0, v1, v2);
             shaderContextLerp(pIn[3], f11, v0, v1, v2);
+            // set ddxUV and ddyUV
+            pIn[0].v2f[SV_ddxUV] = pIn[1].v2f[SV_ddxUV] = pIn[1].v2f[SV_uv] - pIn[0].v2f[SV_uv];
+            pIn[2].v2f[SV_ddxUV] = pIn[3].v2f[SV_ddxUV] = pIn[3].v2f[SV_uv] - pIn[2].v2f[SV_uv];
+            pIn[0].v2f[SV_ddyUV] = pIn[2].v2f[SV_ddyUV] = pIn[2].v2f[SV_uv] - pIn[0].v2f[SV_uv];
+            pIn[1].v2f[SV_ddyUV] = pIn[3].v2f[SV_ddyUV] = pIn[3].v2f[SV_uv] - pIn[1].v2f[SV_uv];
             // shade the covered pixel, and get the depth
             for(j = 0; j < 4; j++)
             {
