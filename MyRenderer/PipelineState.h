@@ -1,6 +1,9 @@
 #pragma once
-#include "MathHelper.h"
 #include <vector>
+#include "MathHelper.h"
+
+#undef near
+#undef far
 
 struct PipelineState
 {

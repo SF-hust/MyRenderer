@@ -159,29 +159,30 @@ protected:
     }
 
 public:
-    // rawat(x, y), directly returns the texture data
-    T& rawat(int x, int y) { return data[rawIndex(x, y)]; }
-    const T& rawat(int x, int y) const { return data[rawIndex(x, y)]; }
-
-    // at(x, y), just used for level0
-    T& at(int x, int y) { return get(x, y, 0); }
-    const T& at(int x, int y) const { return get(x, y, 0); }
+    // at(x, y), directly returns the raw data
+    T& at(int x, int y) { return data[rawIndex(x, y)]; }
+    const T& at(int x, int y) const { return data[rawIndex(x, y)]; }
 
     // mipmapped get(x, y, l, ul, vl)
     T& get(int x, int y, int l, int ul = 0, int vl = 0)
     {
         int rawx, rawy;
-        if (ul == 0 && vl == 0)
-            // if is not anistropic
+        if (mipmapLevel == 0)
         {
-            rawx = x + int(rawWidth) - (1 << (mipmapLevel - l + 1));
-            rawy = y + int(rawWidth) - (1 << (mipmapLevel - l + 1));
+            rawx = x;
+            rawy = y;
+        }
+        else if (ul == 0 && vl == 0)
+         // if is not anistropic
+        {
+            rawx = x + int(rawWidth) - (1 << ((int)mipmapLevel - l + 1));
+            rawy = y + int(rawHeight) - (1 << ((int)mipmapLevel - l + 1));
         }
         else
-            // anistropic
+        // anistropic
         {
-            rawx = x + int(rawWidth) - (1 << (mipmapLevel - ul + 1));
-            rawy = y + int(rawWidth) - (1 << (mipmapLevel - vl + 1));
+            rawx = x + int(rawWidth) - (int)width * (1 << ((int)mipmapLevel - ul + 1));
+            rawy = y + int(rawHeight) - (int)height * (1 << ((int)mipmapLevel - vl + 1));
         }
 
         return data[rawIndex(rawx, rawy)];

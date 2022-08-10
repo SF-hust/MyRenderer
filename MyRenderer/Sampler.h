@@ -95,17 +95,17 @@ protected:
         int stx = 0, edx = tex.width, sty = 0, edy = tex.height;
         if(tex.mipmapLevel != 0)
         {
-            stx = tex.rawWidth - (1 << (tex.mipmapLevel - ul + 1));
-            edx = tex.rawWidth - (1 << (tex.mipmapLevel - ul));
-            sty = tex.rawHeight - (1 << (tex.mipmapLevel - vl + 1));
-            edy = tex.rawHeight - (1 << (tex.mipmapLevel - vl));
+            stx = (int)tex.rawWidth - (1 << ((int)tex.mipmapLevel - ul + 1));
+            edx = (int)tex.rawWidth - (1 << ((int)tex.mipmapLevel - ul));
+            sty = (int)tex.rawHeight - (1 << ((int)tex.mipmapLevel - vl + 1));
+            edy = (int)tex.rawHeight - (1 << ((int)tex.mipmapLevel - vl));
         }
 
         Vec2f uvInTex = {float(stx) + uv.u * float(edx - stx), float(sty) + uv.v * float(edy - sty)};
         switch (filterMode)
         {
         case FILTER_MODE_POINT:
-            result = tex.rawat(int(uvInTex.x), int(uvInTex.y));
+            result = tex.at(int(uvInTex.x), int(uvInTex.y));
             break;
         case FILTER_MODE_LINEAR:
         {
@@ -190,10 +190,10 @@ protected:
             }
             // blend the colors
             T r = {};
-            r += ku * kv * tex.rawat(x0, y0);
-            r += (1 - ku) * kv * tex.rawat(x1, y0);
-            r += ku * (1 - kv) * tex.rawat(x0, y1);
-            r += (1 - ku) * (1 - kv) * tex.rawat(x1, y1);
+            r += ku * kv * tex.at(x0, y0);
+            r += (1 - ku) * kv * tex.at(x1, y0);
+            r += ku * (1 - kv) * tex.at(x0, y1);
+            r += (1 - ku) * (1 - kv) * tex.at(x1, y1);
             result = r;
         }
             break;

@@ -137,6 +137,12 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
                 {
                     avgCenters[j] = Vec2f(0.5f, 0.5f);
                 }
+                avgCenters[j] += Vec2f((float)px, (float)py);
+                // to ndc space
+                avgCenters[j].x /= (float)state.width;
+                avgCenters[j].y /= (float)state.height;
+                avgCenters[j] *= Vec2f(2.0f, 2.0f);
+                avgCenters[j] -= Vec2f(1.0f, 1.0f);
             }
             if(shadingMask == 0U)
             {
@@ -160,27 +166,26 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
             // shade the covered pixel, and get the depth
             for(j = 0; j < 4; j++)
             {
-                if(shadingMask | (1U << j)  != 0)
+                if((shadingMask & (1U << j))  != 0)
                 {
                     float newDepth = pIn[j].v4f[SV_Position].z;
                     Vec4f color = pPixelShader->excute(pIn[j], uniforms, state);
+                    // (px, py) is the real coord of this very pixel
+                    int px = x + pixel2x2Steps[j].x;
+                    int py = y + pixel2x2Steps[j].y;
                     for (i = 0; i < state.msCount; ++i)
                     {
                         if ((newMasks[j] & (1U << i)) != 0U)
                         {
                             // if the new depth is smaller,
                             // or this sample have not been writen
-                            if (msaaDepthBuffer[i].data[x + y * state.width] < newDepth ||
-                                (msaaMask[x + y * state.width] & (1U << i)) == 0U)
+                            if (msaaDepthBuffer[i].data[px + py * state.width] > newDepth)
                             {
-                                msaaColorBuffer[i].data[x + y * state.width] = color.xyz();
-                                msaaDepthBuffer[i].data[x + y * state.width] = newDepth;
+                                msaaColorBuffer[i].data[px + py * state.width] = color.xyz();
+                                msaaDepthBuffer[i].data[px + py * state.width] = newDepth;
                             }
                         }
                     }
-                    // (px, py) is the real coord of this very pixel
-                    int px = x + pixel2x2Steps[j].x;
-                    int py = y + pixel2x2Steps[j].y;
                     // refresh the msaa sample mask
                     msaaMask[px + py * state.width] |= newMasks[j];
                 }
@@ -223,6 +228,7 @@ void Pipeline::mergeMSAARenderTarget()
             if (c > 0)
             {
                 renderTarget.at(x, y) = color / float(c);
+                depthBuffer.at(x, y) = d;
             }
         }
     }

@@ -154,7 +154,6 @@
   <ItemGroup>
     <ClCompile Include="MyRenderer.cpp" />
     <ClCompile Include="Pipeline.cpp" />
-    <ClCompile Include="Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="MyRenderer.rc" />

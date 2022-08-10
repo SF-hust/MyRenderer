@@ -32,8 +32,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     UNREFERENCED_PARAMETER(lpCmdLine);
 
     initSimplePipeline();
-    simPipeline.clearRenderTarget({ 1.0f, 0.5f, 0.5f }, 1.0f);
+    simPipeline.clearRenderTarget({ 0.5f, 0.5f, 0.5f }, 1.0f);
+    simPipeline.renderToTarget();
     simPipeline.presentToScreen(bitData);
+    //memcpy(screenData, bitData, sizeof(bitData));
+    for (int j = 0; j < screenHeight; ++j)
+    {
+        for (int i = 0; i < screenWidth; ++i)
+        {
+            for (int y = 0; y < screenScale; ++y)
+            {
+                for (int x = 0; x < screenScale; ++x)
+                {
+                    screenData[3 * (i * screenScale + x + (j * screenScale + y) * screenWidth * screenScale) + 0] = bitData[3 * (i + j * screenWidth) + 0];
+                    screenData[3 * (i * screenScale + x + (j * screenScale + y) * screenWidth * screenScale) + 1] = bitData[3 * (i + j * screenWidth) + 1];
+                    screenData[3 * (i * screenScale + x + (j * screenScale + y) * screenWidth * screenScale) + 2] = bitData[3 * (i + j * screenWidth) + 2];
+                }
+            }
+            //memcpy(screenData + 3 * (i * screenScale + (j * screenScale) * screenWidth * screenScale), bitData + i * 3 + j * screenWidth, 3);
+        }
+    }
     // TODO: 在此处放置代码。
     GdiplusStartupInput gdiplusStartupInput;
     ULONG_PTR           gdiplusToken;
@@ -72,11 +90,6 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
 
 
 
-//
-//  函数: MyRegisterClass()
-//
-//  目标: 注册窗口类。
-//
 ATOM MyRegisterClass(HINSTANCE hInstance)
 {
     WNDCLASSEXW wcex;
@@ -98,16 +111,6 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
     return RegisterClassExW(&wcex);
 }
 
-//
-//   函数: InitInstance(HINSTANCE, int)
-//
-//   目标: 保存实例句柄并创建主窗口
-//
-//   注释:
-//
-//        在此函数中，我们在全局变量中保存实例句柄并
-//        创建和显示主程序窗口。
-//
 BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    hInst = hInstance; // 将实例句柄存储在全局变量中
@@ -133,12 +136,12 @@ void OnPaint(HDC hdc)
     BITMAPINFO bmi;
     memset(&bmi, 0, sizeof(bmi));
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = 800;
-    bmi.bmiHeader.biHeight = 600;
+    bmi.bmiHeader.biWidth = screenWidth * screenScale;
+    bmi.bmiHeader.biHeight = screenHeight * screenScale;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
     bmi.bmiHeader.biBitCount = 24;
-    Gdiplus::Bitmap* bitmap = new Gdiplus::Bitmap(&bmi, bitData);
+    Gdiplus::Bitmap* bitmap = new Gdiplus::Bitmap(&bmi, screenData);
 
     graphics.DrawImage(bitmap, 0, 0);
 }
