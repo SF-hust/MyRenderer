@@ -36,6 +36,8 @@ public:
 protected:
     void rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, const ShaderContext& v2);
 
+    std::vector<ShaderContext> clippingTriangle(ShaderContext& v0, ShaderContext& v1, ShaderContext& v2);
+
     void mergeMSAARenderTarget();
 
     void resetMSAARenderTarget()
@@ -100,3 +102,5 @@ void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in
 Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
 
 void doPerspectiveDivision(Vec4f& v);
+
+bool shouldClip(Vec4f& v);
