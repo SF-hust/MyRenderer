@@ -15,7 +15,7 @@ inline T clamp(T x, T mi, T ma)
 
 
 //---------------------------------------------------------------------
-// ÊıÑ§¿â£ºÏòÁ¿¶¨Òå
+// æ•°å­¦åº“ï¼šå‘é‡å®šä¹‰
 //---------------------------------------------------------------------
 
 template <size_t N, typename T> struct Vector {
@@ -113,7 +113,7 @@ struct Vector<4, T>
 };
 
 //---------------------------------------------------------------------
-// ÊıÑ§¿â£ºÏòÁ¿ÔËËã
+// æ•°å­¦åº“ï¼šå‘é‡è¿ç®—
 //---------------------------------------------------------------------
 
 template <size_t N, typename T>
@@ -248,13 +248,13 @@ inline float Vector_length(const Vector<N, float>& a) {
     return sqrtf(Vector_length_square(a));
 }
 
-// ÏòÁ¿¹æ¸ñ»¯ normalize
+// å‘é‡è§„æ ¼åŒ– normalize
 template<size_t N, typename T>
 inline Vector<N, T> Vector_normalize(const Vector<N, T>& a) {
     return a / Vector_length(a);
 }
 
-// Ê¸Á¿µã³Ë
+// çŸ¢é‡ç‚¹ä¹˜
 template<size_t N, typename T>
 inline T Vector_dot(const Vector<N, T>& a, const Vector<N, T>& b) {
     T sum = 0;
@@ -262,31 +262,31 @@ inline T Vector_dot(const Vector<N, T>& a, const Vector<N, T>& b) {
     return sum;
 }
 
-// ¶şÎ¬Ê¸Á¿²æ³Ë
+// äºŒç»´çŸ¢é‡å‰ä¹˜
 template<typename T>
 inline T Vector_cross(const Vector<2, T>& a, const Vector<2, T>& b) {
     return a.x * b.y - a.y * b.x;
 }
 
-// ÈıÎ¬Ê¸Á¿²æ³Ë
+// ä¸‰ç»´çŸ¢é‡å‰ä¹˜
 template<typename T>
 inline Vector<3, T> Vector_cross(const Vector<3, T>& a, const Vector<3, T>& b) {
     return Vector<3, T>(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x);
 }
 
-// ËÄÎ¬Ê¸Á¿²æ³Ë£ºÇ°ÈıÎ¬²æ³Ë£¬ºóÒ»Î»±£Áô
+// å››ç»´çŸ¢é‡å‰ä¹˜ï¼šå‰ä¸‰ç»´å‰ä¹˜ï¼Œåä¸€ä½ä¿ç•™
 template<typename T>
 inline Vector<4, T> Vector_cross(const Vector<4, T>& a, const Vector<4, T>& b) {
     return Vector<4, T>(a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x, a.w);
 }
 
-// ÏßĞÔ²åÖµ
+// çº¿æ€§æ’å€¼
 template<size_t N, typename T>
 inline Vector<N, T> Vector_lerp(const Vector<N, T>& a, const Vector<N, T>& b, float t) {
     return a + (b - a) * t;
 }
 
-// ¸÷¸öÔªËØÈ¡×î´óÖµ
+// å„ä¸ªå…ƒç´ å–æœ€å¤§å€¼
 template<size_t N, typename T>
 inline Vector<N, T> Vector_max(const Vector<N, T>& a, const Vector<N, T>& b) {
     Vector<N, T> c;
@@ -294,7 +294,7 @@ inline Vector<N, T> Vector_max(const Vector<N, T>& a, const Vector<N, T>& b) {
     return c;
 }
 
-// ¸÷¸öÔªËØÈ¡×îĞ¡Öµ
+// å„ä¸ªå…ƒç´ å–æœ€å°å€¼
 template<size_t N, typename T>
 inline Vector<N, T> Vector_min(const Vector<N, T>& a, const Vector<N, T>& b) {
     Vector<N, T> c;
@@ -302,31 +302,31 @@ inline Vector<N, T> Vector_min(const Vector<N, T>& a, const Vector<N, T>& b) {
     return c;
 }
 
-// ½«Ê¸Á¿µÄÖµ¿ØÖÆÔÚ minx/maxx ·¶Î§ÄÚ
+// å°†çŸ¢é‡çš„å€¼æ§åˆ¶åœ¨ minx/maxx èŒƒå›´å†…
 template<size_t N, typename T>
 inline Vector<N, T> Vector_between(const Vector<N, T>& minx, const Vector<N, T>& maxx, const Vector<N, T>& x) {
     return Vector_min(Vector_max(minx, x), maxx);
 }
 
-// ÅĞ¶ÏÊ¸Á¿ÊÇ·ñ½Ó½ü
+// åˆ¤æ–­çŸ¢é‡æ˜¯å¦æ¥è¿‘
 template<size_t N, typename T>
 inline bool Vector_near(const Vector<N, T>& a, const Vector<N, T>& b, T dist) {
     return (Vector_length_square(a - b) <= dist);
 }
 
-// ÅĞ¶ÏÁ½¸öµ¥¾«¶ÈÊ¸Á¿ÊÇ·ñ½üËÆ
+// åˆ¤æ–­ä¸¤ä¸ªå•ç²¾åº¦çŸ¢é‡æ˜¯å¦è¿‘ä¼¼
 template<size_t N>
 inline bool Vector_near_equal(const Vector<N, float>& a, const Vector<N, float>& b, float e = 0.0001) {
     return Vector_near(a, b, e);
 }
 
-// ÅĞ¶ÏÁ½¸öË«¾«¶ÈÊ¸Á¿ÊÇ·ñ½üËÆ
+// åˆ¤æ–­ä¸¤ä¸ªåŒç²¾åº¦çŸ¢é‡æ˜¯å¦è¿‘ä¼¼
 template<size_t N>
 inline bool Vector_near_equal(const Vector<N, double>& a, const Vector<N, double>& b, double e = 0.0000001) {
     return Vector_near(a, b, e);
 }
 
-// Ê¸Á¿ÖµÔªËØ·¶Î§²Ã¼ô
+// çŸ¢é‡å€¼å…ƒç´ èŒƒå›´è£å‰ª
 template<size_t N, typename T>
 inline Vector<N, T> Vector_clamp(const Vector<N, T>& a, T minx = 0, T maxx = 1) {
     Vector<N, T> b;
@@ -337,7 +337,7 @@ inline Vector<N, T> Vector_clamp(const Vector<N, T>& a, T minx = 0, T maxx = 1) 
     return b;
 }
 
-// Êä³öµ½ÎÄ±¾Á÷
+// è¾“å‡ºåˆ°æ–‡æœ¬æµ
 template<size_t N, typename T>
 inline std::ostream& operator << (std::ostream& os, const Vector<N, T>& a) {
     os << "[";
@@ -349,7 +349,7 @@ inline std::ostream& operator << (std::ostream& os, const Vector<N, T>& a) {
     return os;
 }
 
-// Êä³ö³É×Ö·û´®
+// è¾“å‡ºæˆå­—ç¬¦ä¸²
 template<size_t N, typename T>
 inline std::string Vector_repr(const Vector<N, T>& a) {
     std::stringstream ss;
@@ -358,7 +358,7 @@ inline std::string Vector_repr(const Vector<N, T>& a) {
 }
 
 //---------------------------------------------------------------------
-// ÊıÑ§¿â£º¾ØÕó¶¨Òå
+// æ•°å­¦åº“ï¼šçŸ©é˜µå®šä¹‰
 //---------------------------------------------------------------------
 template<size_t ROW, size_t COL, typename T> struct Matrix {
     T m[ROW][COL];
@@ -380,7 +380,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
     inline const T* operator [] (size_t row) const { assert(row < ROW); return m[row]; }
     inline T* operator [] (size_t row) { assert(row < ROW); return m[row]; }
 
-    // È¡Ò»ĞĞ
+    // å–ä¸€è¡Œ
     inline Vector<COL, T> Row(size_t row) const {
         assert(row < ROW);
         Vector<COL, T> a;
@@ -388,7 +388,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
         return a;
     }
 
-    // È¡Ò»ÁĞ
+    // å–ä¸€åˆ—
     inline Vector<ROW, T> Col(size_t col) const {
         assert(col < COL);
         Vector<ROW, T> a;
@@ -396,19 +396,19 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
         return a;
     }
 
-    // ÉèÖÃÒ»ĞĞ
+    // è®¾ç½®ä¸€è¡Œ
     inline void SetRow(size_t row, const Vector<COL, T>& a) {
         assert(row < ROW);
         for (size_t i = 0; i < COL; i++) m[row][i] = a[i];
     }
 
-    // ÉèÖÃÒ»ÁĞ
+    // è®¾ç½®ä¸€åˆ—
     inline void SetCol(size_t col, const Vector<ROW, T>& a) {
         assert(col < COL);
         for (size_t i = 0; i < ROW; i++) m[i][col] = a[i];
     }
 
-    // È¡µÃÉ¾³ıÄ³ĞĞºÍÄ³ÁĞµÄ×Ó¾ØÕó£º×ÓÊ½
+    // å–å¾—åˆ é™¤æŸè¡Œå’ŒæŸåˆ—çš„å­çŸ©é˜µï¼šå­å¼
     inline Matrix<ROW - 1, COL - 1, T> GetMinor(size_t row, size_t col) const {
         Matrix<ROW - 1, COL - 1, T> ret;
         for (size_t r = 0; r < ROW - 1; r++) {
@@ -419,7 +419,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
         return ret;
     }
 
-    // È¡µÃ×ªÖÃ¾ØÕó
+    // å–å¾—è½¬ç½®çŸ©é˜µ
     inline Matrix<COL, ROW, T> Transpose() const {
         Matrix<COL, ROW, T> ret;
         for (size_t r = 0; r < ROW; r++) {
@@ -429,7 +429,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
         return ret;
     }
 
-    // È¡µÃ 0 ¾ØÕó
+    // å–å¾— 0 çŸ©é˜µ
     inline static Matrix<ROW, COL, T> GetZero() {
         Matrix<ROW, COL, T> ret;
         for (size_t r = 0; r < ROW; r++) {
@@ -439,7 +439,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
         return ret;
     }
 
-    // È¡µÃµ¥Î»¾ØÕó
+    // å–å¾—å•ä½çŸ©é˜µ
     inline static Matrix<ROW, COL, T> GetIdentity() {
         Matrix<ROW, COL, T> ret;
         for (size_t r = 0; r < ROW; r++) {
@@ -451,7 +451,7 @@ template<size_t ROW, size_t COL, typename T> struct Matrix {
 };
 
 //---------------------------------------------------------------------
-// ÊıÑ§¿â£º¾ØÕóÔËËã
+// æ•°å­¦åº“ï¼šçŸ©é˜µè¿ç®—
 //---------------------------------------------------------------------
 template<size_t ROW, size_t COL, typename T>
 inline bool operator == (const Matrix<ROW, COL, T>& a, const Matrix<ROW, COL, T>& b) {
@@ -570,22 +570,22 @@ inline Vector<ROW, T> operator * (const Matrix<ROW, COL, T>& m, const Vector<COL
 
 
 //---------------------------------------------------------------------
-// ÊıÑ§¿â£ºĞĞÁĞÊ½ºÍÄæ¾ØÕóµÈ£¬¹âÕÕ¼ÆËãÓĞÓÃ
+// æ•°å­¦åº“ï¼šè¡Œåˆ—å¼å’Œé€†çŸ©é˜µç­‰ï¼Œå…‰ç…§è®¡ç®—æœ‰ç”¨
 //---------------------------------------------------------------------
 
-// ĞĞÁĞÊ½ÇóÖµ£ºÒ»½×
+// è¡Œåˆ—å¼æ±‚å€¼ï¼šä¸€é˜¶
 template<typename T>
 inline T matrix_det(const Matrix<1, 1, T>& m) {
     return m[0][0];
 }
 
-// ĞĞÁĞÊ½ÇóÖµ£º¶ş½×
+// è¡Œåˆ—å¼æ±‚å€¼ï¼šäºŒé˜¶
 template<typename T>
 inline T matrix_det(const Matrix<2, 2, T>& m) {
     return m[0][0] * m[1][1] - m[0][1] * m[1][0];
 }
 
-// ĞĞÁĞÊ½ÇóÖµ£º¶à½×ĞĞÁĞÊ½£¬¼´µÚÒ»ĞĞÍ¬ËûÃÇµÄÓà×ÓÊ½Ïà³ËÇóºÍ
+// è¡Œåˆ—å¼æ±‚å€¼ï¼šå¤šé˜¶è¡Œåˆ—å¼ï¼Œå³ç¬¬ä¸€è¡ŒåŒä»–ä»¬çš„ä½™å­å¼ç›¸ä¹˜æ±‚å’Œ
 template<size_t N, typename T>
 inline T matrix_det(const Matrix<N, N, T>& m) {
     T sum = 0;
@@ -593,19 +593,19 @@ inline T matrix_det(const Matrix<N, N, T>& m) {
     return sum;
 }
 
-// Óà×ÓÊ½£ºÒ»½×
+// ä½™å­å¼ï¼šä¸€é˜¶
 template<typename T>
 inline T matrix_cofactor(const Matrix<1, 1, T>& m, size_t row, size_t col) {
     return 0;
 }
 
-// ¶à½×Óà×ÓÊ½£º¼´É¾³ıÌØ¶¨ĞĞÁĞµÄ×ÓÊ½µÄĞĞÁĞÊ½Öµ
+// å¤šé˜¶ä½™å­å¼ï¼šå³åˆ é™¤ç‰¹å®šè¡Œåˆ—çš„å­å¼çš„è¡Œåˆ—å¼å€¼
 template<size_t N, typename T>
 inline T matrix_cofactor(const Matrix<N, N, T>& m, size_t row, size_t col) {
     return matrix_det(m.GetMinor(row, col)) * (((row + col) % 2) ? -1 : 1);
 }
 
-// °éËæ¾ØÕó£º¼´Óà×ÓÊ½¾ØÕóµÄ×ªÖÃ
+// ä¼´éšçŸ©é˜µï¼šå³ä½™å­å¼çŸ©é˜µçš„è½¬ç½®
 template<size_t N, typename T>
 inline Matrix<N, N, T> matrix_adjoint(const Matrix<N, N, T>& m) {
     Matrix<N, N, T> ret;
@@ -615,7 +615,7 @@ inline Matrix<N, N, T> matrix_adjoint(const Matrix<N, N, T>& m) {
     return ret;
 }
 
-// ÇóÄæ¾ØÕó£ºÊ¹ÓÃ°éËæ¾ØÕó³ıÒÔĞĞÁĞÊ½µÄÖµµÃµ½
+// æ±‚é€†çŸ©é˜µï¼šä½¿ç”¨ä¼´éšçŸ©é˜µé™¤ä»¥è¡Œåˆ—å¼çš„å€¼å¾—åˆ°
 template<size_t N, typename T>
 inline Matrix<N, N, T> matrix_invert(const Matrix<N, N, T>& m) {
     Matrix<N, N, T> ret = matrix_adjoint(m);
@@ -623,7 +623,7 @@ inline Matrix<N, N, T> matrix_invert(const Matrix<N, N, T>& m) {
     return ret / det;
 }
 
-// Êä³öµ½ÎÄ±¾Á÷
+// è¾“å‡ºåˆ°æ–‡æœ¬æµ
 template<size_t ROW, size_t COL, typename T>
 inline std::ostream& operator << (std::ostream& os, const Matrix<ROW, COL, T>& m) {
     for (size_t r = 0; r < ROW; r++) {
@@ -635,7 +635,7 @@ inline std::ostream& operator << (std::ostream& os, const Matrix<ROW, COL, T>& m
 
 
 //---------------------------------------------------------------------
-// ¹¤¾ßº¯Êı
+// å·¥å…·å‡½æ•°
 //---------------------------------------------------------------------
 template<typename T> inline T Abs(T x) { return (x < 0) ? (-x) : x; }
 template<typename T> inline T Max(T x, T y) { return (x < y) ? y : x; }
@@ -649,7 +649,7 @@ template<typename T> inline T Between(T xmin, T xmax, T x) {
     return Min(Max(xmin, x), xmax);
 }
 
-// ½ØÈ¡ [0, 1] µÄ·¶Î§
+// æˆªå– [0, 1] çš„èŒƒå›´
 template<typename T> inline T Saturate(T x) {
     return Between<T>(0, 1, x);
 }
@@ -661,10 +661,10 @@ typedef Matrix<3, 4, float> Mat3x4f;
 
 
 //---------------------------------------------------------------------
-// 3D ÊıÑ§ÔËËã
+// 3D æ•°å­¦è¿ç®—
 //---------------------------------------------------------------------
 
-// Ê¸Á¿×ªÕûÊıÑÕÉ«
+// çŸ¢é‡è½¬æ•´æ•°é¢œè‰²
 inline static uint32_t Vector_to_color(const Vec4f& color) {
     uint32_t r = (uint32_t)Between(0, 255, (int)(color.r * 255.0f));
     uint32_t g = (uint32_t)Between(0, 255, (int)(color.g * 255.0f));
@@ -673,12 +673,12 @@ inline static uint32_t Vector_to_color(const Vec4f& color) {
     return (r << 16) | (g << 8) | b | (a << 24);
 }
 
-// Ê¸Á¿×ª»»ÕûÊıÑÕÉ«
+// çŸ¢é‡è½¬æ¢æ•´æ•°é¢œè‰²
 inline static uint32_t Vector_to_color(const Vec3f& color) {
     return Vector_to_color(Vec4f(color, 1));
 }
 
-// ÕûÊıÑÕÉ«µ½Ê¸Á¿
+// æ•´æ•°é¢œè‰²åˆ°çŸ¢é‡
 inline static Vec4f Vector_from_color(uint32_t rgba) {
     Vec4f out;
     out.r = ((rgba >> 16) & 0xff) / 255.0f;
@@ -709,7 +709,7 @@ inline static Mat4x4f matrix_set_identity() {
     return m;
 }
 
-// Æ½ÒÆ±ä»»
+// å¹³ç§»å˜æ¢
 inline static Mat4x4f matrix_set_translate(float x, float y, float z) {
     Mat4x4f m = matrix_set_identity();
     m.m[3][0] = x;
@@ -718,7 +718,7 @@ inline static Mat4x4f matrix_set_translate(float x, float y, float z) {
     return m;
 }
 
-// Ëõ·Å±ä»»
+// ç¼©æ”¾å˜æ¢
 inline static Mat4x4f matrix_set_scale(float x, float y, float z) {
     Mat4x4f m = matrix_set_identity();
     m.m[0][0] = x;
@@ -727,7 +727,7 @@ inline static Mat4x4f matrix_set_scale(float x, float y, float z) {
     return m;
 }
 
-// Ğı×ª±àºÅ£¬Î§ÈÆ (x, y, z) Ê¸Á¿Ğı×ª theta ½Ç¶È
+// æ—‹è½¬ç¼–å·ï¼Œå›´ç»• (x, y, z) çŸ¢é‡æ—‹è½¬ theta è§’åº¦
 inline static Mat4x4f matrix_set_rotate(float x, float y, float z, float theta) {
     float qsin = (float)sin(theta * 0.5f);
     float qcos = (float)cos(theta * 0.5f);
@@ -752,7 +752,7 @@ inline static Mat4x4f matrix_set_rotate(float x, float y, float z, float theta) 
     return m;
 }
 
-// ÉãÓ°»ú±ä»»¾ØÕó£ºeye/ÊÓµãÎ»ÖÃ£¬at/¿´ÏòÄÄÀï£¬up/Ö¸ÏòÉÏ·½µÄÊ¸Á¿
+// æ‘„å½±æœºå˜æ¢çŸ©é˜µï¼šeye/è§†ç‚¹ä½ç½®ï¼Œat/çœ‹å‘å“ªé‡Œï¼Œup/æŒ‡å‘ä¸Šæ–¹çš„çŸ¢é‡
 inline static Mat4x4f matrix_set_lookat(const Vec3f& eye, const Vec3f& at, const Vec3f& up) {
     Vec3f zaxis = Vector_normalize(at - eye);
     Vec3f xaxis = Vector_normalize(Vector_cross(up, zaxis));
