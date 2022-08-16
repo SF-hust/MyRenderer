@@ -21,11 +21,10 @@ void Pipeline::renderToTarget()
             for(int j = 0; j < clippedVertex.size() - 2; j += 3)
             {
                 // do perspective division
+                // and SV_Position will be transformed to NDC space( x: -1~1, y: -1~1, z: 0~1 )
                 doPerspectiveDivision(clippedVertex[i + 0].v4f[SV_Position]);
                 doPerspectiveDivision(clippedVertex[i + 1].v4f[SV_Position]);
                 doPerspectiveDivision(clippedVertex[i + 2].v4f[SV_Position]);
-                // TODO?: tranform to NDC space
-        
                 // raster, and shade the pixels
                 rasterTriangle(clippedVertex[i], clippedVertex[i + 1], clippedVertex[i + 2]);
             }
@@ -33,11 +32,10 @@ void Pipeline::renderToTarget()
         else
         {
             // do perspective division
+            // and SV_Position will be transformed to NDC space( x: -1~1, y: -1~1, z: 0~1 )
             doPerspectiveDivision(vOut0.v4f[SV_Position]);
             doPerspectiveDivision(vOut1.v4f[SV_Position]);
             doPerspectiveDivision(vOut2.v4f[SV_Position]);
-            // TODO?: tranform to NDC space
-            
             // raster, and shade the pixels
             rasterTriangle(vOut0, vOut1, vOut2);
         }
