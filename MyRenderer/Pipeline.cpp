@@ -81,13 +81,19 @@ void Pipeline::rasterTriangle(const ShaderContext& v0, const ShaderContext& v1, 
     // TODO?: test per tile of 4x8 pixels
     int xstart, xend, ystart, yend;
     int x, y, i, j;
-    // transform input positions to screen space
-    Vec2f p0 = (v0.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
-    Vec2f p1 = (v1.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
-    Vec2f p2 = (v2.v4f.at(SV_Position).xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
+    // get the SV_Position of all input
     const Vec4f& pos0 = v0.v4f.at(SV_Position);
     const Vec4f& pos1 = v1.v4f.at(SV_Position);
     const Vec4f& pos2 = v2.v4f.at(SV_Position);
+    // transform input positions to screen space
+    Vec2f p0 = (pos0.xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
+    Vec2f p1 = (pos1.xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
+    Vec2f p2 = (pos2.xy() + Vec2f(1.0f, 1.0f)) * Vec2f(0.5f, 0.5f) * Vec2f((float)state.width, (float)state.height);
+    // if triangle in screen space or NDC space is 0 in size, clip
+    if(triangleIsZeroInSize(p0, p1, p2) || triangleIsZeroInSize(pos0.xy(), pos1.xy(), pos2.xy()))
+    {
+        return;
+    }
     // get the bounding box of triangle, from (xstart, ystart) to (xend, yend)(not include)
     xstart = std::max((int)std::min({ p0.x, p1.x, p2.x }), 0);
     xend = std::min((int)std::max({ p0.x, p1.x, p2.x }) + 1, state.width);
@@ -285,17 +291,23 @@ void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in
     }
 }
 
+// don't input a triangle (v0, v1, v2) which is 0 in size
 Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
 {
-    Vec2f c = p - v2;
-    Vec2f a = v0 - v2;
-    Vec2f b = v1 - v2;
-    float axb = Vector_cross(a, b);
+    Vec2f v2p = p - v2;
+    Vec2f v20 = v0 - v2;
+    Vec2f v21 = v1 - v2;
     Vec3f factor;
-    factor[0] = Vector_cross(c, b) / axb;
-    factor[1] = Vector_cross(c, a) / (-axb);
+    float v20_x_v21 = Vector_cross(v20, v21);
+    factor[0] = Vector_cross(v2p, v21) / v20_x_v21;
+    factor[1] = Vector_cross(v2p, v20) / (-v20_x_v21);
     factor[2] = 1.0f - factor[0] - factor[1];
     return factor;
+}
+
+bool triangleIsZeroInSize(Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    return Vector_cross(v0 - v2, v1 - v2) == 0.0f;
 }
 
 void doPerspectiveDivision(Vec4f& v)

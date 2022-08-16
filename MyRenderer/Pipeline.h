@@ -105,3 +105,5 @@ Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2);
 void doPerspectiveDivision(Vec4f& v);
 
 bool shouldClip(Vec4f& v);
+
+bool triangleIsZeroInSize(Vec2f v0, Vec2f v1, Vec2f v2);
