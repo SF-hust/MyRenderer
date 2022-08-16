@@ -10,7 +10,7 @@ enum MipMapMode
 {
     MIPMAP_MODE_NO_MIPMAP,
     MIPMAP_MODE_NEAREST,
-    MIPMAP_MODE_LEARNER,
+    MIPMAP_MODE_LINEAR,
 };
 
 enum AddressMode
@@ -44,12 +44,20 @@ public:
             result = sampleFromUVLevel(tex, uv, 0, 0);
             break;
         case MIPMAP_MODE_NEAREST:
-            /* code */
+            float scale = (ddxUV.x * (float)tex.width + ddyUV.y * (float)tex.height) / 2.0f;
+            int mip = fmodf(scale, 1.0f) > 0.5f? (int)scale : (int)scale - 1;
+            mip = std::min(std::max(mip, 0), tex.mipmapLevel);
+            result = sampleFromUVLevel(tex, uv, mip, mip);
             break;
-        case MIPMAP_MODE_LEARNER:
-            /* code */
-            break;
-        default:
+        case MIPMAP_MODE_LINEAR:
+        {
+            float scale = (ddxUV.x * (float)tex.width + ddyUV.y * (float)tex.height) / 2.0f;
+            float factor = fmodf(scale, 1.0f);
+            int mip1 = std::min(std::max((int)scale - 1, 0), tex.mipmapLevel);
+            int mip2 = std::min(std::max((int)scale, 0), tex.mipmapLevel);
+            result += (1.0f - factor) * sampleFromUVLevel(tex, uv, mip1, mip1);
+            result += factor * sampleFromUVLevel(tex, uv, mip2, mip2);
+        }
             break;
         }
 
