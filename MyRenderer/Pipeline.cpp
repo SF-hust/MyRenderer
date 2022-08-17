@@ -206,6 +206,37 @@ std::vector<ShaderContext> Pipeline::clippingTriangle(ShaderContext& v0, ShaderC
     return std::vector<ShaderContext>();
 }
 
+void Pipeline::resetMSAARenderTarget()
+{
+    // reset msaa render targets count
+    if (state.msCount != (int)msaaColorBuffer.size())
+    {
+        msaaColorBuffer.clear();
+        msaaDepthBuffer.clear();
+        msaaColorBuffer.reserve(state.msCount);
+        msaaDepthBuffer.reserve(state.msCount);
+    }
+    // clear all msaa render targets
+    for (int i = 0; i < state.msCount; ++i)
+    {
+        msaaColorBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearColor);
+        msaaDepthBuffer.emplace_back(renderTarget.width, renderTarget.height, lastClearDepth);
+    }
+    // clear masks to 0
+    msaaMask.clear();
+    msaaMask.resize(renderTarget.width * renderTarget.height, 0);
+}
+
+void Pipeline::resetRenderTargetState()
+{
+    // if size of the render target changed, recreate it
+    if (renderTarget.width != state.width || renderTarget.height != state.height)
+    {
+        renderTarget = Texture2D3F(state.width, state.height);
+        depthBuffer = Texture2D1F(state.width, state.height);
+    }
+}
+
 void Pipeline::mergeMSAARenderTarget()
 {
     int i, c, x, y;
@@ -239,28 +270,6 @@ void Pipeline::mergeMSAARenderTarget()
     }
 }
 
-bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
-{
-    Vec3f factor = getFactor(p, v0, v1, v2);
-    return factor[0] >= 0.0f && factor[1] >= 0.0f && factor[2] >= 0.0f;
-}
-
-Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
-{
-    Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
-    return toPerspectiveCorrectFactor(rawFactor, p0, p1, p2);
-}
-
-Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
-{
-    float c0 = f[0] / p0.w;
-    float c1 = f[1] / p1.w;
-    float c2 = f[2] / p2.w;
-    float c = c0 + c1 + c2;
-    Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
-    return correctedFactor;
-}
-
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2)
 {
     int key;
@@ -289,35 +298,4 @@ void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in
         key = itr->first;
         out.m4x4[key] = factor.x * in0.m4x4.at(key) + factor.y * in1.m4x4.at(key) + factor.z * in2.m4x4.at(key);
     }
-}
-
-// don't input a triangle (v0, v1, v2) which is 0 in size
-Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
-{
-    Vec2f v2p = p - v2;
-    Vec2f v20 = v0 - v2;
-    Vec2f v21 = v1 - v2;
-    Vec3f factor;
-    float v20_x_v21 = Vector_cross(v20, v21);
-    factor[0] = Vector_cross(v2p, v21) / v20_x_v21;
-    factor[1] = Vector_cross(v2p, v20) / (-v20_x_v21);
-    factor[2] = 1.0f - factor[0] - factor[1];
-    return factor;
-}
-
-bool triangleIsZeroInSize(Vec2f v0, Vec2f v1, Vec2f v2)
-{
-    return Vector_cross(v0 - v2, v1 - v2) == 0.0f;
-}
-
-void doPerspectiveDivision(Vec4f& v)
-{
-    v.x /= v.w;
-    v.y /= v.w;
-    v.z /= v.w;
-}
-
-bool shouldClip(Vec4f& v)
-{
-    return v.x < -v.w || v.x > v.w || v.y < -v.w || v.y > v.w || v.z < -v.w || v.z > v.w;
 }

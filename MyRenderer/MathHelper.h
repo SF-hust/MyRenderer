@@ -782,3 +782,55 @@ inline uint8_t floatToByte(float f)
     return (uint8_t)(f * 255.0f);
 }
 
+inline bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    Vec3f factor = getFactor(p, v0, v1, v2);
+    return factor[0] >= 0.0f && factor[1] >= 0.0f && factor[2] >= 0.0f;
+}
+
+inline Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
+{
+    Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
+    return toPerspectiveCorrectFactor(rawFactor, p0, p1, p2);
+}
+
+inline Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
+{
+    float c0 = f[0] / p0.w;
+    float c1 = f[1] / p1.w;
+    float c2 = f[2] / p2.w;
+    float c = c0 + c1 + c2;
+    Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
+    return correctedFactor;
+}
+
+// don't input a triangle (v0, v1, v2) which is 0 in size
+inline Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    Vec2f v2p = p - v2;
+    Vec2f v20 = v0 - v2;
+    Vec2f v21 = v1 - v2;
+    Vec3f factor;
+    float v20_x_v21 = Vector_cross(v20, v21);
+    factor[0] = Vector_cross(v2p, v21) / v20_x_v21;
+    factor[1] = Vector_cross(v2p, v20) / (-v20_x_v21);
+    factor[2] = 1.0f - factor[0] - factor[1];
+    return factor;
+}
+
+inline bool triangleIsZeroInSize(Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    return Vector_cross(v0 - v2, v1 - v2) == 0.0f;
+}
+
+inline void doPerspectiveDivision(Vec4f& v)
+{
+    v.x /= v.w;
+    v.y /= v.w;
+    v.z /= v.w;
+}
+
+inline bool shouldClip(Vec4f& v)
+{
+    return v.x < -v.w || v.x > v.w || v.y < -v.w || v.y > v.w || v.z < -v.w || v.z > v.w;
+}
