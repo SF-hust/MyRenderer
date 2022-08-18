@@ -779,29 +779,7 @@ inline static Mat4x4f matrix_set_perspective(float fovy, float aspect, float zn,
 
 inline uint8_t floatToByte(float f)
 {
-    return (uint8_t)(f * 255.0f);
-}
-
-inline bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
-{
-    Vec3f factor = getFactor(p, v0, v1, v2);
-    return factor[0] >= 0.0f && factor[1] >= 0.0f && factor[2] >= 0.0f;
-}
-
-inline Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
-{
-    Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
-    return toPerspectiveCorrectFactor(rawFactor, p0, p1, p2);
-}
-
-inline Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
-{
-    float c0 = f[0] / p0.w;
-    float c1 = f[1] / p1.w;
-    float c2 = f[2] / p2.w;
-    float c = c0 + c1 + c2;
-    Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
-    return correctedFactor;
+    return uint8_t(clamp(f, 0.0f, 1.0f) * 255.0f);
 }
 
 // don't input a triangle (v0, v1, v2) which is 0 in size
@@ -816,6 +794,28 @@ inline Vec3f getFactor(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
     factor[1] = Vector_cross(v2p, v20) / (-v20_x_v21);
     factor[2] = 1.0f - factor[0] - factor[1];
     return factor;
+}
+
+inline bool pointInTriangle(Vec2f p, Vec2f v0, Vec2f v1, Vec2f v2)
+{
+    Vec3f factor = getFactor(p, v0, v1, v2);
+    return factor[0] >= 0.0f && factor[1] >= 0.0f && factor[2] >= 0.0f;
+}
+
+inline Vec3f toPerspectiveCorrectFactor(const Vec3f& f, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
+{
+    float c0 = f[0] / p0.w;
+    float c1 = f[1] / p1.w;
+    float c2 = f[2] / p2.w;
+    float c = c0 + c1 + c2;
+    Vec3f correctedFactor = { c0 / c, c1 / c, c2 / c };
+    return correctedFactor;
+}
+
+inline Vec3f getPerspectiveCorrectFactor(const Vec2f& q, const Vec4f& p0, const Vec4f& p1, const Vec4f& p2)
+{
+    Vec3f rawFactor = getFactor(q, p0.xy(), p1.xy(), p2.xy());
+    return toPerspectiveCorrectFactor(rawFactor, p0, p1, p2);
 }
 
 inline bool triangleIsZeroInSize(Vec2f v0, Vec2f v1, Vec2f v2)

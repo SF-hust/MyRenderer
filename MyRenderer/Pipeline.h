@@ -63,3 +63,5 @@ protected:
 
     static const Vec2i pixel2x2Steps[4];
 };
+
+void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2);

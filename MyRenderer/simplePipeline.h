@@ -6,7 +6,7 @@ constexpr int SC_COLOR = 5;
 
 constexpr int screenWidth = 100;
 constexpr int screenHeight = 100;
-constexpr int screenScale = 4;
+constexpr int screenScale = 8;
 
 std::vector<ShaderContext> sim_vertices;
 
@@ -83,7 +83,7 @@ void genColorredQuad()
     sim_vertices[0].v3f[SC_COLOR] = { 1.0f, 0.0f, 0.0f };
     sim_vertices[1].v3f[SC_COLOR] = { 0.0f, 1.0f, 0.0f };
     sim_vertices[2].v3f[SC_COLOR] = { 0.0f, 0.0f, 1.0f };
-    sim_vertices[3].v3f[SC_COLOR] = { 0.0f, 0.0f, 0.0f };
+    sim_vertices[3].v3f[SC_COLOR] = { 1.0f, 1.0f, 1.0f };
     sim_indecies = { 0, 2, 1, 1, 2, 3 };
 }
 

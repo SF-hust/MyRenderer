@@ -17,6 +17,11 @@ public:
     Texture2D(size_t w, size_t h, const std::vector<T>& buffer, int maxMipmapLevel = 0)
         : width(w), height(h)
     {
+        if (width == 0 || height == 0)
+        {
+            this->maxMipmapLevel = 0;
+            return;
+        }
         // get the max mipmap level possible
         int mmlp = 0;
         data = buffer;
@@ -48,6 +53,11 @@ public:
     Texture2D(size_t w, size_t h, T initColor = {}, int maxMipmapLevel = 0)
         : width(w), height(h)
     {
+        if (width == 0 || height == 0)
+        {
+            this->maxMipmapLevel = 0;
+            return;
+        }
         // get the max mipmap level possible
         int mmlp = 0;
         while (((width >> mmlp) & 1) == 0 && ((height >> mmlp) & 1) == 0)
@@ -96,12 +106,12 @@ public:
     {
         float* fs = (float*)data.data();
         int fcount = sizeof(T) / sizeof(float);
-        int pix_count = rawWidth * rawHeight;
+        int pix_count = width * height;
         for (int i = 0; i < pix_count; ++i)
         {
             for (int j = 0; j < fcount; ++j)
             {
-                pDest[i * fcount + j] = uint8_t(clamp(fs[i * fcount + fcount - j - 1], 0.0f, 1.0f) * 255.0f);
+                pDest[i * fcount + j] = floatToByte(fs[i * fcount + fcount - j - 1]);
             }
         }
     }
