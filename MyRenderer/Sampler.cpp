@@ -10,14 +10,14 @@ T Sampler2D<T>::sample(const Texture2D<T> &tex, Vec2f uv, Vec2f ddxUV, Vec2f ddy
         result = sampleFromUVLevel(tex, uv, 0, 0);
         break;
     case MIPMAP_MODE_NEAREST:
-        float scale = (ddxUV.x * (float)tex.width + ddyUV.y * (float)tex.height) / 2.0f;
+        float scale = std::max(ddxUV.x * (float)tex.width, ddyUV.y * (float)tex.height);
         int mip = fmodf(scale, 1.0f) > 0.5f ? (int)scale : (int)scale - 1;
         mip = std::min(std::max(mip, 0), tex.mipmapLevel);
         result = sampleFromUVLevel(tex, uv, mip, mip);
         break;
     case MIPMAP_MODE_LINEAR:
     {
-        float scale = (ddxUV.x * (float)tex.width + ddyUV.y * (float)tex.height) / 2.0f;
+        float scale = std::max(ddxUV.x * (float)tex.width, ddyUV.y * (float)tex.height);
         float factor = fmodf(scale, 1.0f);
         int mip1 = std::min(std::max((int)scale - 1, 0), tex.mipmapLevel);
         int mip2 = std::min(std::max((int)scale, 0), tex.mipmapLevel);
