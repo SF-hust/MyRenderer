@@ -254,17 +254,17 @@ void Pipeline::mergeMSAARenderTarget()
                 if ((msaaMask[x + y * state.width] & (1U << i)) != 0)
                 {
                     ++c;
-                    if (d > msaaDepthBuffer[i].at(x, y))
+                    if (d > msaaDepthBuffer[i].get(x, y))
                     {
-                        d = msaaDepthBuffer[i].at(x, y);
+                        d = msaaDepthBuffer[i].get(x, y);
                     }
-                    color += msaaColorBuffer[i].at(x, y);
+                    color += msaaColorBuffer[i].get(x, y);
                 }
             }
             if (c > 0)
             {
-                renderTarget.at(x, y) = color / float(state.msCount);
-                depthBuffer.at(x, y) = d;
+                renderTarget.get(x, y) = color / float(state.msCount);
+                depthBuffer.get(x, y) = d;
             }
         }
     }

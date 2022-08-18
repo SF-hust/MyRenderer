@@ -12,15 +12,15 @@ T Sampler2D<T>::sample(const Texture2D<T> &tex, Vec2f uv, Vec2f ddxUV, Vec2f ddy
     case MIPMAP_MODE_NEAREST:
         float scale = std::max(ddxUV.x * (float)tex.width, ddyUV.y * (float)tex.height);
         int mip = fmodf(scale, 1.0f) > 0.5f ? (int)scale : (int)scale - 1;
-        mip = std::min(std::max(mip, 0), tex.mipmapLevel);
+        mip = std::min(std::max(mip, 0), tex.maxMipmapLevel);
         result = sampleFromUVLevel(tex, uv, mip, mip);
         break;
     case MIPMAP_MODE_LINEAR:
     {
         float scale = std::max(ddxUV.x * (float)tex.width, ddyUV.y * (float)tex.height);
         float factor = fmodf(scale, 1.0f);
-        int mip1 = std::min(std::max((int)scale - 1, 0), tex.mipmapLevel);
-        int mip2 = std::min(std::max((int)scale, 0), tex.mipmapLevel);
+        int mip1 = std::min(std::max((int)scale - 1, 0), tex.maxMipmapLevel);
+        int mip2 = std::min(std::max((int)scale, 0), tex.maxMipmapLevel);
         result += (1.0f - factor) * sampleFromUVLevel(tex, uv, mip1, mip1);
         result += factor * sampleFromUVLevel(tex, uv, mip2, mip2);
     }
@@ -57,12 +57,12 @@ T Sampler2D<T>::sampleFromUVLevel(const Texture2D<T>& tex, Vec2f rawUV, int ul, 
     }
 
     int stx = 0, edx = tex.width, sty = 0, edy = tex.height;
-    if (tex.mipmapLevel != 0)
+    if (tex.maxMipmapLevel != 0)
     {
-        stx = (int)tex.rawWidth - (1 << ((int)tex.mipmapLevel - ul + 1));
-        edx = (int)tex.rawWidth - (1 << ((int)tex.mipmapLevel - ul));
-        sty = (int)tex.rawHeight - (1 << ((int)tex.mipmapLevel - vl + 1));
-        edy = (int)tex.rawHeight - (1 << ((int)tex.mipmapLevel - vl));
+        stx = (int)tex.rawWidth - (1 << ((int)tex.maxMipmapLevel - ul + 1));
+        edx = (int)tex.rawWidth - (1 << ((int)tex.maxMipmapLevel - ul));
+        sty = (int)tex.rawHeight - (1 << ((int)tex.maxMipmapLevel - vl + 1));
+        edy = (int)tex.rawHeight - (1 << ((int)tex.maxMipmapLevel - vl));
     }
 
     Vec2f uvInTex = {float(stx) + uv.u * float(edx - stx), float(sty) + uv.v * float(edy - sty)};
