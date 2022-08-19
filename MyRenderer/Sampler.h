@@ -40,7 +40,7 @@ public:
 
     void setMipMapMode(MipMapMode m) { mipmapMode = m; }
 
-    void setFilterMode(FilterMode f) { filterMode = f; }
+    void setFilterMode(FilterMode f, int a) { filterMode = f; this->anisotropicLevel = a; }
 
     void setBorderColor(Vec4f b) { borderColor = b; }
 
@@ -60,4 +60,5 @@ protected:
     MipMapMode mipmapMode = MIPMAP_MODE_NO_MIPMAP;
     FilterMode filterMode = FILTER_MODE_POINT;
     T borderColor = {};
+    int anisotropicLevel = 4;
 };
