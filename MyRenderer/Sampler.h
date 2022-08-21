@@ -47,7 +47,7 @@ public:
 protected:
     T sampleFromMipmapLevel(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel) const;
 
-    T sampleAnistrophic(const Texture2D<T>& tex, Vec2f rawUV, Vec2f ddxUV, Vec2f ddyUV) const;
+    T sampleAnisotropic(const Texture2D<T>& tex, Vec2f rawUV, Vec2f ddxUV, Vec2f ddyUV) const;
 
     T samplePoint(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel) const;
 

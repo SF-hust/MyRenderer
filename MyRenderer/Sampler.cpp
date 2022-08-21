@@ -12,7 +12,7 @@ T Sampler2D<T>::sample(const Texture2D<T> &tex, Vec2f uv, Vec2f ddxUV, Vec2f ddy
     // anisotropic filter mode ignores mipmap mode
     if(filterMode == FILTER_MODE_ANISOTROPIC)
     {
-        return sampleAnistrophic(tex, uv, ddxUV, ddyUV);
+        return sampleAnisotropic(tex, uv, ddxUV, ddyUV);
     }
 
     // get actual sample uv
@@ -32,7 +32,6 @@ T Sampler2D<T>::sample(const Texture2D<T> &tex, Vec2f uv, Vec2f ddxUV, Vec2f ddy
         // use long edge to calculate mipmap level
         float scale = std::max(ddxUV.x * (float)tex.width, ddyUV.y * (float)tex.height);
         int mip = fmodf(scale, 1.0f) > 0.5f ? (int)scale : (int)scale - 1;
-        mip = std::min(std::max(mip, 0), tex.maxMipmapLevel);
         mip = clamp(mip, 0, tex.maxMipmapLevel);
 
         result = sampleFromMipmapLevel(tex, sampleUV, mip);
@@ -47,11 +46,11 @@ T Sampler2D<T>::sample(const Texture2D<T> &tex, Vec2f uv, Vec2f ddxUV, Vec2f ddy
         int mip2 = clamp((int)scale, 0, tex.maxMipmapLevel);
 
         // get the blend factor
-        float factor = fmodf(scale, 1.0f);
+        float factor = 1.0f - fmodf(scale, 1.0f);
 
         // sample and blend
-        result += (1.0f - factor) * sampleFromMipmapLevel(tex, sampleUV, mip1);
-        result += factor * sampleFromMipmapLevel(tex, sampleUV, mip2);
+        result += factor * sampleFromMipmapLevel(tex, sampleUV, mip1);
+        result += (1.0f - factor) * sampleFromMipmapLevel(tex, sampleUV, mip2);
         break;
     }
 
@@ -76,9 +75,65 @@ T Sampler2D<T>::sampleFromMipmapLevel(const Texture2D<T>& tex, Vec2f uv, int mip
 }
 
 template<class T>
-T Sampler2D<T>::sampleAnistrophic(const Texture2D<T>& tex, Vec2f rawUV, Vec2f ddxUV, Vec2f ddyUV) const
+T Sampler2D<T>::sampleAnisotropic(const Texture2D<T>& tex, Vec2f rawUV, Vec2f ddxUV, Vec2f ddyUV) const
 {
-    
+    // a is the longer edge, b is the shorter edge
+    // a and b are in texture space
+    Vec2f a = { ddxUV.u * (float)tex.width, ddxUV.v * (float)tex.height };
+    Vec2f b = { ddyUV.u * (float)tex.width, ddyUV.v * (float)tex.height };
+
+    // alen and blen are in units of texel
+    float alen = Vector_length(a);
+    float blen = Vector_length(b);
+    if (alen < blen)
+    {
+        std::swap(a, b);
+        std::swap(alen, blen);
+    }
+
+    // make b be normal to a
+    b -= Vector_dot(a, b) / (alen * blen) * a;
+    blen = Vector_length(b);
+
+    // get two mipmap levels and the blend factor
+    int mip1 = clamp((int)blen - 1, 0, tex.maxMipmapLevel);
+    int mip2 = clamp((int)blen, 0, tex.maxMipmapLevel);
+    float mipmapFactor = fmodf(blen, 1.0f);
+
+    // get actual sample points count
+    int sampleCount = clamp((int)(alen / blen + 0.5f), 1, anisotropicLevel);
+
+    std::vector<Vec2f> rawSampleUVs(sampleCount);
+
+    // calculate sample points
+    if (sampleCount == 1)
+    {
+        rawSampleUVs[0] = rawUV;
+    }
+    else
+    {
+        Vec2f mainDirection = { a.x / (float)tex.width, a.y / (float)tex.height };
+        mainDirection -= Vector_normalize(mainDirection) * blen;
+        Vec2f sampleStart = rawUV - (mainDirection / 2);
+        Vec2f sampleEnd = rawUV + (mainDirection / 2);
+        for (int i = 0; i < sampleCount; ++i)
+        {
+            float f = (float)i / (float)(sampleCount - 1);
+            rawSampleUVs[i] = (1.0f - f) * sampleStart + f * sampleEnd;
+        }
+    }
+
+    // do sample and blend all samples
+    T result = {};
+    for (auto& rawUV : rawSampleUVs)
+    {
+        Vec2f uv = getSampleUV(rawUV);
+        result += mipmapFactor * sampleLinear(tex, uv, mip1);
+        result += (1 - mipmapFactor) * sampleLinear(tex, uv, mip2);
+    }
+    result /= (float)rawSampleUVs.size();
+
+    return result;
 }
 
 template <class T>
@@ -100,6 +155,7 @@ T Sampler2D<T>::sampleLinear(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel)
     // get width and height of current mipmap level
     int w = (int)tex.width >> mipmapLevel;
     int h = (int)tex.height >> mipmapLevel;
+
     // get sample point in texture space of current mipmap level
     float xf = uv.u * (float)w;
     float yf = uv.v * (float)h;
@@ -122,7 +178,7 @@ T Sampler2D<T>::sampleLinear(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel)
     else if (fmodf(xf, 1.0f) < 0.5f)
     {
         // sample point in left half of texel
-        // that is fractional part of xf is in [0.0, 0.5)
+        // when fractional part of xf is in [0.0, 0.5)
 
         ku = 0.5f - fmodf(xf, 1.0f);
         x1 = int(xf);
@@ -141,7 +197,7 @@ T Sampler2D<T>::sampleLinear(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel)
     else
     {
         // sample point in right half of texel
-        // that is fractional part of xf is in [0.5, 1.0)
+        // when fractional part of xf is in [0.5, 1.0)
 
         ku = 1.5f - fmodf(xf, 1.0f);
         x0 = int(xf);
@@ -164,7 +220,7 @@ T Sampler2D<T>::sampleLinear(const Texture2D<T>& tex, Vec2f uv, int mipmapLevel)
         kv = 1.0f;
         y0 = y1 = h - 1;
     }
-    else if (fmodf(uvInTex.v, 1.0f) < 0.5f)
+    else if (fmodf(yf, 1.0f) < 0.5f)
     {
         kv = 0.5f - fmodf(yf, 1.0f);
         y1 = int(yf);
