@@ -43,6 +43,8 @@ protected:
 
     void resetRenderTargetState();
 
+    bool shouldClip(Vec4f& v);
+
 protected:
     Texture2D3F renderTarget;
     Texture2D1F depthBuffer;

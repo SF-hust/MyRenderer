@@ -270,6 +270,13 @@ void Pipeline::mergeMSAARenderTarget()
     }
 }
 
+bool Pipeline::shouldClip(Vec4f& v)
+{
+    return v.w < state.near || v.w > state.far ||
+        v.x < -v.w || v.x > v.w ||
+        v.y < -v.w || v.y > v.w;
+}
+
 void shaderContextLerp(ShaderContext& out, Vec3f factor, const ShaderContext& in0, const ShaderContext& in1, const ShaderContext& in2)
 {
     int key;

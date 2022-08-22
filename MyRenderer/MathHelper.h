@@ -829,8 +829,3 @@ inline void doPerspectiveDivision(Vec4f& v)
     v.y /= v.w;
     v.z /= v.w;
 }
-
-inline bool shouldClip(Vec4f& v)
-{
-    return v.x < -v.w || v.x > v.w || v.y < -v.w || v.y > v.w || v.z < -v.w || v.z > v.w;
-}
